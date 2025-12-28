@@ -526,11 +526,7 @@
 
         const longCell = (value) => {
           const text = String(value ?? "").trim();
-          const safe = esc(text || "TBD");
-          return `
-            <div class="cellClamp">${safe}</div>
-            <button type="button" class="moreBtn" data-more="1">Show more</button>
-          `;
+          return esc(text || "TBD");
         };
 
         els.brandCompareBody.innerHTML = list.map(b => {
@@ -671,18 +667,6 @@
         setActive(els.type, "data-type", "all");
 
         rerenderAll();
-      });
-
-      // Toggle "Show more" inside compare table
-      document.addEventListener("click", (e) => {
-        const btn = e.target.closest(".moreBtn[data-more='1']");
-        if (!btn) return;
-
-        const clamp = btn.parentElement.querySelector(".cellClamp");
-        if (!clamp) return;
-
-        clamp.classList.toggle("expanded");
-        btn.textContent = clamp.classList.contains("expanded") ? "Show less" : "Show more";
       });
 
       // Initial render
