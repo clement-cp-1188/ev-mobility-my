@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MY Electric Mobility Comparison</title>
+  <title>MY Electric Mobility — Commercial vs Home + JV Viability</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="container">
     <h1>Malaysia Electric Mobility Comparison</h1>
     <p class="sub">
-      Compare <b>commercial</b> vs <b>home</b> use across EV motorcycles, e-scooters, and e-bicycles — with brand examples.
+      Compare <b>commercial</b> vs <b>home</b> use across EV motorcycles, e-scooters, and e-bicycles —
+      plus a <b>brand directory</b> with <b>JV viability</b>.
     </p>
   </header>
 
@@ -38,14 +39,33 @@
 
         <div class="control grow">
           <label>Search (brands / notes)</label>
-          <input id="q" type="search" placeholder="e.g., Blueshark, NIU, campus, delivery..." />
+          <input id="q" type="search" placeholder="e.g., Blueshark, NIU, swapping, delivery, campus..." />
         </div>
       </div>
 
       <div class="row small">
         <div class="pill" id="countPill">0 results</div>
+        <div class="pill" id="brandPill">Brand: <b id="brandLabel">All</b></div>
         <button id="reset" class="ghost">Reset</button>
       </div>
+    </section>
+
+    <section class="card">
+      <div class="sectionHead">
+        <h2>Brand Directory (JV Viability)</h2>
+        <div class="sectionTools">
+          <label class="inlineLabel">Sort</label>
+          <select id="brandSort">
+            <option value="score">JV score (high → low)</option>
+            <option value="name">Name (A → Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="brandGrid" class="grid"></div>
+      <p class="hint">
+        Scoring is a practical internal heuristic (ops + financing + service > marketing). Validate via due diligence.
+      </p>
     </section>
 
     <section class="card">
@@ -68,9 +88,6 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <p class="hint">
-        Tip: this is a practical landscape view — always verify latest availability, pricing, and official distributors before decisions.
-      </p>
     </section>
 
     <section class="card">
@@ -80,7 +97,7 @@
   </main>
 
   <footer class="container footer">
-    <span>Built for fast internal comparison • Static site • GitHub Pages friendly</span>
+    <span>Static site • GitHub Pages friendly • Click brand cards to filter</span>
   </footer>
 
   <script src="script.js"></script>
