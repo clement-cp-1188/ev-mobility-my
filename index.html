@@ -1,4 +1,3 @@
-<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -58,7 +57,7 @@
       </div>
 
       <div class="row small">
-        <div class="pill" id="countPill">Directory brands: 0 • Table brands: 0 • Segments: 0</div>
+        <div class="pill" id="countPill">Commercial: 0 • Home: 0 • Total shown: 0</div>
         <div class="pill">Brand: <b id="brandLabel">All</b></div>
         <button id="reset" class="ghost" type="button">Reset</button>
       </div>
@@ -79,30 +78,28 @@
       <div id="brandGrid" class="grid"></div>
 
       <p class="hint">
-        Manufacturing filter applies to both the directory and the table. Click a brand card to filter the table.
+        Manufacturing filter applies to both the directory and the table. Click a brand card to filter.
       </p>
     </section>
 
     <section class="card">
-      <h2>Comparison Table</h2>
+      <h2>Commercial vs Home — Brand Coverage (Auto from directory)</h2>
       <div class="tableWrap">
         <table>
           <thead>
             <tr>
-              <th>Use</th>
-              <th>Vehicle Type</th>
-              <th>Best For</th>
-              <th>Typical Speed</th>
-              <th>Payload</th>
-              <th>Daily Usage</th>
-              <th>Battery Strategy</th>
-              <th>Ownership / Pricing</th>
-              <th>Brands (Auto from directory)</th>
+              <th style="min-width:120px">Use</th>
+              <th>EV Motorcycle</th>
+              <th>E-Scooter</th>
+              <th>E-Bicycle</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
+      <p class="hint">
+        Each cell shows <b>brand count</b> + brands matching current filters.
+      </p>
     </section>
 
     <section class="card">
