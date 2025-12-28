@@ -58,8 +58,14 @@
 
       <div class="row small">
         <div class="pill" id="countPill">Commercial: 0 • Home: 0 • Total shown: 0</div>
-        <div class="pill">Brand: <b id="brandLabel">All</b></div>
+        <div class="pill">Selected: <b id="brandLabel">All</b></div>
         <button id="reset" class="ghost" type="button">Reset</button>
+      </div>
+
+      <div class="selectedBar" id="selectedBar">
+        <div class="selectedTitle">Selected brands</div>
+        <div class="selectedChips" id="selectedChips"></div>
+        <button id="clearSelected" class="miniGhost" type="button">Clear selection</button>
       </div>
     </section>
 
@@ -78,7 +84,7 @@
       <div id="brandGrid" class="grid"></div>
 
       <p class="hint">
-        Manufacturing filter applies to both the directory and the table. Click a brand card to filter.
+        Click cards to multi-select. Expand for ops detail. Filters apply to both directory and comparison.
       </p>
     </section>
 
@@ -109,7 +115,7 @@
   </main>
 
   <footer class="container footer">
-    <span>Static site • GitHub Pages friendly • Click brand cards to filter • Expand cards for ops detail</span>
+    <span>Static site • GitHub Pages friendly • Multi-select brands to focus the comparison</span>
   </footer>
 
   <script src="./script.js" defer></script>
