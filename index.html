@@ -108,7 +108,31 @@
       </div>
       <p class="hint">Each cell shows brand count + brands matching the current filters and selection.</p>
     </section>
+<section class="card">
+  <h2>Brands Comparison</h2>
+  <p class="hint">
+    Compares the <b>selected brands</b>. If none selected, compares all brands matching current filters.
+  </p>
 
+  <div class="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="min-width:180px">Brand</th>
+          <th style="min-width:150px">Origin</th>
+          <th style="min-width:190px">Manufacturing</th>
+          <th style="min-width:220px">Vehicle Type(s)</th>
+          <th style="min-width:160px">Use Case(s)</th>
+          <th style="min-width:120px">JV Score</th>
+          <th style="min-width:280px">JV Roles</th>
+          <th style="min-width:420px">Notes</th>
+        </tr>
+      </thead>
+      <tbody id="brandCompareBody"></tbody>
+    </table>
+  </div>
+</section>
+    
     <section class="card">
       <h2>Quick Takeaways</h2>
       <ul id="takeaways"></ul>
