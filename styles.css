@@ -14,9 +14,14 @@
 }
 
 *{ box-sizing:border-box; }
-html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+html,body{
+  margin:0;
+  padding:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
 
-/* Wider page (fix empty space) */
 .container{
   width:min(1560px, calc(100% - 48px));
   margin: 0 auto;
@@ -33,6 +38,7 @@ h1{ margin:0 0 6px; font-size: 30px; }
   padding: 16px;
   margin: 14px 0;
   box-shadow: 0 10px 25px rgba(0,0,0,.25);
+  overflow: visible; /* helps sticky behavior in some edge cases */
 }
 
 .controls .row{ display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
@@ -235,6 +241,9 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
   color: var(--text);
   background:#121625;
   white-space:nowrap;
+  max-width: 100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .badge.good{ border-color: rgba(57,217,138,.35); }
 .badge.warn{ border-color: rgba(255,209,102,.35); }
@@ -243,7 +252,7 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 
 .smallText{ margin-top:10px; font-size:12px; color: var(--muted); line-height:1.35; }
 
-/* Expand details MUST appear */
+/* Expand details */
 .details{
   margin-top:10px;
   padding-top:10px;
@@ -254,12 +263,12 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 
 .kv{
   display:grid;
-  grid-template-columns: 140px 1fr;
+  grid-template-columns: 150px 1fr;
   gap: 8px 10px;
   font-size:12px;
 }
 .k{ color:#c7d0de; opacity:.9; }
-.v{ color: var(--muted); }
+.v{ color: var(--muted); line-height:1.35; }
 
 .expandRow{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:10px; }
 .expandBtn{
@@ -272,7 +281,7 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 }
 .expandBtn:hover{ border-color:#3a4157; }
 
-/* TABLES */
+/* TABLE WRAP: real scroll container */
 .tableWrap{
   overflow:auto;
   max-height:70vh;
@@ -281,6 +290,7 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
   border:1px solid rgba(37,42,54,.55);
 }
 
+/* Sticky headers inside .tableWrap */
 .tableWrap thead th{
   position: sticky;
   top: 0;
@@ -289,24 +299,13 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
   box-shadow: 0 1px 0 rgba(37,42,54,.9);
 }
 
-.stickyCol{
-  position: sticky;
-  left: 0;
-  z-index: 10;
-  background: #10131b;
-  border-right: 1px solid rgba(37,42,54,.8);
-}
-.tableWrap thead .stickyCol{
-  z-index: 30;
-  background: #0f1118;
-}
-
 table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
-  table-layout: fixed;
 }
+
+/* Default table cell styling */
 thead th{
   text-align:left;
   font-size:12px;
@@ -322,55 +321,65 @@ tbody td{
   vertical-align: top;
 }
 
-.thUse{ width: 120px; }
-.thType{ width: 340px; }
-
-.cellHead{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  margin-bottom:10px;
-}
-.cellCount{
-  font-size:12px;
-  color:var(--muted);
-  border:1px solid var(--line);
-  background:#0f1118;
-  padding:4px 8px;
-  border-radius:999px;
-  white-space:nowrap;
-}
+/* Chips in table cells: FIX OVERLAP */
 .brandGridInCell{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap:10px;
-  align-items:start;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:flex-start;
 }
 
+/* Compare table: content-driven widths + wrapping (fix missing details) */
+.compareTable{
+  width: max-content;     /* shrink to fit columns */
+  min-width: 100%;        /* but fill container at minimum */
+  table-layout: auto;     /* IMPORTANT: no fixed layout */
+}
+.compareTable th{ white-space: nowrap; }
 .compareTable td{
   white-space: normal;
-  max-width: 320px;
-  line-height: 1.35;
-}
-.compareTable th{
-  white-space: nowrap;
+  word-break: break-word;
+  line-height:1.35;
+  max-width: 320px;       /* prevent insane wide columns */
 }
 
-/* Sticky first column */
+/* Sticky first column (works with sticky header) */
 .stickyCol{
   position: sticky;
   left: 0;
-  z-index: 10;             /* lower than header (20) */
+  z-index: 10;
   background: #10131b;
   border-right: 1px solid rgba(37,42,54,.8);
 }
-
-/* Header cell in first column should be above everything */
 .tableWrap thead .stickyCol{
   z-index: 30;
   background: #0f1118;
 }
+
+/* Collapsible long text inside cells */
+.cellClamp{
+  max-height: 3.8em;      /* ~2-3 lines */
+  overflow: hidden;
+  position: relative;
+}
+.cellClamp.expanded{
+  max-height: none;
+}
+
+.moreBtn{
+  margin-top: 6px;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.moreBtn:hover{ border-color:#3a4157; color: var(--text); }
 
 .hint{ color:var(--muted); font-size:12px; margin: 10px 2px 0; }
 .footer{ color:var(--muted); padding: 18px 0 26px; font-size:12px; }
