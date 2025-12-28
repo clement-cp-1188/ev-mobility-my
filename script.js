@@ -260,6 +260,7 @@
               </div>
 
               <div class="expandRow">
+                <span class="brandMeta">Click card = toggle select</span>
                 <button class="expandBtn" type="button">${state.expanded.has(b.name) ? "Collapse" : "Expand"}</button>
               </div>
             </div>
