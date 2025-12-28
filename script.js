@@ -1,8 +1,9 @@
-// script.js — FIXED
-// Fixes:
-// - countPill shows BRANDS count (not segments), so you won’t see “6” and think it’s broken
-// - manufacturing filter uses normalized comparison (trim + lowercase) so it actually works
-// - comparison table auto-derives brands per segment from the brand directory + applies ALL filters
+// script.js — FULL UPDATED (counts fixed + manufacturing/table filters solid)
+// Key fixes:
+// - Count pill shows: Directory brands, Table brands (unique), Segments
+// - Manufacturing filter uses normalized comparison (trim + lowercase)
+// - Comparison table auto-derives brands from directory and applies ALL filters
+// - Avoids misleading “6” by showing what 6 actually means (segments)
 
 (function () {
   function showError(msg) {
@@ -15,9 +16,11 @@
     panel.textContent = "❌ Website error:\n\n" + msg;
     document.body.appendChild(panel);
   }
+
   window.addEventListener("error", (e) => {
     showError(e.message + (e.filename ? `\n\nFile: ${e.filename}:${e.lineno}:${e.colno}` : ""));
   });
+
   window.addEventListener("unhandledrejection", (e) => {
     showError("Unhandled Promise Rejection:\n\n" + (e.reason?.stack || e.reason || e));
   });
@@ -72,10 +75,10 @@
         });
       }
 
-      // ---------------------------
-      // Brands (your current set)
-      // If you have “much more brands”, paste them into BRANDS and they will show automatically.
-      // ---------------------------
+      // -----------------------
+      // BRAND DATA
+      // NOTE: If you have "much more brands", add them here (or tell me and I'll expand with MY market brands).
+      // -----------------------
       const BRANDS = [
         { name:"Blueshark", category:"EV Motorcycle", focus:"Commercial-first (delivery/fleet oriented)", jvScore:82,
           roles:["Fleet ops partner","Swap ecosystem partner"],
@@ -222,7 +225,7 @@
         },
       ];
 
-      // Enrichment: manufacturing + use cases
+      // Enrichment for manufacturing + useCases (controls “Mode” filter)
       const BRAND_META = {
         "Modenas": { origin:"Local (MY)", manufacturingType:"Local OEM", useCases:["commercial","home"] },
         "Eclimo": { origin:"Local (MY)", manufacturingType:"Local OEM", useCases:["commercial","home"] },
@@ -246,7 +249,7 @@
         ...(BRAND_META[b.name] || { origin:"Origin TBD", manufacturingType:"TBD", useCases:["commercial","home"] })
       }));
 
-      // Segment templates (always 6 segments — that’s OK; brands list inside is the dynamic part)
+      // 6 structural segments = 2 use buckets x 3 vehicle types
       const SEGMENTS = [
         { use:"Commercial", vehicleType:"EV Motorcycle", bestFor:"Delivery, fleets, couriers (high utilization)", speed:"60–90 km/h", payload:"High", dailyUsage:"80–150 km/day", batteryStrategy:"Swap / depot charging preferred; charging ok for SMEs", pricing:"Subscription/lease usually best; outright later" },
         { use:"Commercial", vehicleType:"E-Scooter", bestFor:"Urban commute fleets, light delivery, intra-city ops", speed:"40–60 km/h", payload:"Medium", dailyUsage:"40–80 km/day", batteryStrategy:"Charging common; removable battery helps depot ops", pricing:"Lease works if service SLAs enforced" },
@@ -276,12 +279,10 @@
 
       function vehicleTypeMatchesBrand(vehicleType, brandCategory) {
         const cat = String(brandCategory || "");
-        // Treat "E-Bicycle (Shared)" as E-Bicycle
         const normalized = cat.replaceAll("E-Bicycle (Shared)", "E-Bicycle");
         return normalized.includes(vehicleType);
       }
 
-      // Common filter: type + mfg + search
       function brandPassesCommonFilters(b) {
         const typeOk = state.type === "all" || vehicleTypeMatchesBrand(state.type, b.category);
 
@@ -306,16 +307,15 @@
       }
 
       function filteredBrandsForDirectory() {
-        return BRANDS_ENRICHED
-          .filter(b => brandPassesCommonFilters(b) && brandMatchesMode(b))
-          .sort((a,b) => {
-            if (state.brandSort === "name") return a.name.localeCompare(b.name);
-            return (b.jvScore ?? 0) - (a.jvScore ?? 0);
-          });
+        const list = BRANDS_ENRICHED.filter(b => brandPassesCommonFilters(b) && brandMatchesMode(b));
+        return list.sort((a,b) => {
+          if (state.brandSort === "name") return a.name.localeCompare(b.name);
+          return (b.jvScore ?? 0) - (a.jvScore ?? 0);
+        });
       }
 
       function brandsForSegment(seg) {
-        const segMode = norm(seg.use); // "commercial" / "home"
+        const segMode = norm(seg.use);
         return BRANDS_ENRICHED
           .filter(b => brandPassesCommonFilters(b))
           .filter(b => (b.useCases || []).map(norm).includes(segMode))
@@ -324,14 +324,18 @@
           .map(b => b.name);
       }
 
+      function countUniqueBrandsInTable(segments) {
+        const set = new Set();
+        segments.forEach(seg => brandsForSegment(seg).forEach(name => set.add(name)));
+        return set.size;
+      }
+
       function renderTakeaways() {
         const items = TAKEAWAYS[state.mode] || TAKEAWAYS.all;
         els.takeaways.innerHTML = items.map(x => `<li>${escapeHtml(x)}</li>`).join("");
       }
 
-      function renderBrands() {
-        const list = filteredBrandsForDirectory();
-
+      function renderBrandGrid(list) {
         els.brandGrid.innerHTML = list.map((b) => {
           const active = state.brand === b.name ? "active" : "";
           const col = scoreColor(b.jvScore ?? 0);
@@ -383,14 +387,9 @@
         }).join("");
 
         els.brandLabel.textContent = state.brand === "all" ? "All" : state.brand;
-        return list.length;
       }
 
-      function renderTable() {
-        const segments = SEGMENTS
-          .filter(seg => state.mode === "all" ? true : norm(seg.use) === norm(state.mode))
-          .filter(seg => state.type === "all" ? true : seg.vehicleType === state.type);
-
+      function renderTable(segments) {
         els.tbody.innerHTML = segments.map(seg => {
           const brands = brandsForSegment(seg);
           return `
@@ -412,35 +411,27 @@
             </tr>
           `;
         }).join("");
-
-        return segments.length;
       }
 
-      function countBrandsInTable(segments) {
-  const set = new Set();
-  segments.forEach(seg => {
-    brandsForSegment(seg).forEach(name => set.add(name));
-  });
-  return set.size;
-}
+      function currentSegments() {
+        return SEGMENTS
+          .filter(seg => state.mode === "all" ? true : norm(seg.use) === norm(state.mode))
+          .filter(seg => state.type === "all" ? true : seg.vehicleType === state.type);
+      }
 
-function rerenderAll() {
-  renderTakeaways();
+      function rerenderAll() {
+        renderTakeaways();
 
-  const dirBrands = filteredBrandsForDirectory(); // array
-  renderBrandsFromList(dirBrands);                // render using list
+        const dirBrands = filteredBrandsForDirectory();
+        renderBrandGrid(dirBrands);
 
-  const segments = SEGMENTS
-    .filter(seg => state.mode === "all" ? true : norm(seg.use) === norm(state.mode))
-    .filter(seg => state.type === "all" ? true : seg.vehicleType === state.type);
+        const segs = currentSegments();
+        renderTable(segs);
 
-  renderTableFromSegments(segments);              // render using segments
-
-  const tableBrandCount = countBrandsInTable(segments);
-
-  els.countPill.textContent =
-    `Directory brands: ${dirBrands.length} • Table brands: ${tableBrandCount} • Segments: ${segments.length}`;
-}
+        const tableBrandCount = countUniqueBrandsInTable(segs);
+        els.countPill.textContent =
+          `Directory brands: ${dirBrands.length} • Table brands: ${tableBrandCount} • Segments: ${segs.length}`;
+      }
 
       function resetAll() {
         state.mode = "all";
@@ -466,7 +457,6 @@ function rerenderAll() {
         if (!btn) return;
         state.mode = btn.dataset.mode;
         setActive(els.mode, "data-mode", state.mode);
-        // When mode changes, keep brand filter but rerender everything
         rerenderAll();
       });
 
