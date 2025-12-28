@@ -274,16 +274,22 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 
 /* TABLES */
 .tableWrap{
-  overflow:auto;
+  overflow: auto;
   border-radius: 12px;
+
+  /* KEY: make it a real scroll container so sticky header sticks */
+  max-height: 70vh;        /* you can tune: 60vh / 75vh */
+  position: relative;      /* helps sticky in some browsers */
+  border: 1px solid rgba(37,42,54,.55);
 }
 
-/* Sticky headers (fix “missing header”) */
-table thead th{
+/* Sticky headers that ACTUALLY stay visible inside .tableWrap */
+.tableWrap thead th{
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 20;             /* above body cells */
   background: #0f1118;
+  box-shadow: 0 1px 0 rgba(37,42,54,.9);
 }
 
 table{
@@ -337,13 +343,19 @@ tbody td{
   min-width: 1700px;
 }
 
-/* Sticky first column in compare table */
+/* Sticky first column */
 .stickyCol{
   position: sticky;
   left: 0;
-  z-index: 6;
+  z-index: 10;             /* lower than header (20) */
   background: #10131b;
   border-right: 1px solid rgba(37,42,54,.8);
+}
+
+/* Header cell in first column should be above everything */
+.tableWrap thead .stickyCol{
+  z-index: 30;
+  background: #0f1118;
 }
 
 .hint{ color:var(--muted); font-size:12px; margin: 10px 2px 0; }
