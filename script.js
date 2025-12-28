@@ -72,7 +72,7 @@
         });
       }
 
-      // ---------- DATA (rich fields restored) ----------
+      // ---------- DATA ----------
       const BRANDS = [
         {
           name:"Blueshark",
@@ -519,7 +519,14 @@
           return `<div class="brandGridInCell">${items.map(x => `<span class="badge info">${esc(x)}</span>`).join("")}</div>`;
         };
 
-        const td = (v) => esc(v || "TBD");
+        const longCell = (value) => {
+          const text = String(value ?? "").trim();
+          const safe = esc(text || "TBD");
+          return `
+            <div class="cellClamp">${safe}</div>
+            <button type="button" class="moreBtn" data-more="1">Show more</button>
+          `;
+        };
 
         els.brandCompareBody.innerHTML = list.map(b => {
           const vts = String(b.category || "")
@@ -542,14 +549,14 @@
               <td>${chips(ucs)}</td>
               <td>${badgeForScore(b.jvScore)}</td>
               <td>${(b.roles && b.roles.length) ? esc(b.roles.join(", ")) : `<span style="color:#9aa4b2">—</span>`}</td>
-              <td>${td(b.pricingCommercial)}</td>
-              <td>${td(b.pricingHome)}</td>
-              <td>${td(b.batteryStrategy)}</td>
-              <td>${td(b.serviceAfterSales)}</td>
-              <td>${td(b.warranty)}</td>
-              <td>${td(b.financing)}</td>
-              <td>${td(b.jvRisks)}</td>
-              <td>${esc(b.notes || "—")}</td>
+              <td>${longCell(b.pricingCommercial)}</td>
+              <td>${longCell(b.pricingHome)}</td>
+              <td>${longCell(b.batteryStrategy)}</td>
+              <td>${longCell(b.serviceAfterSales)}</td>
+              <td>${longCell(b.warranty)}</td>
+              <td>${longCell(b.financing)}</td>
+              <td>${longCell(b.jvRisks)}</td>
+              <td>${longCell(b.notes || "—")}</td>
             </tr>
           `;
         }).join("");
@@ -603,6 +610,7 @@
         rerenderAll();
       });
 
+      // Expand card vs select
       els.brandGrid.addEventListener("click", (e) => {
         const card = e.target.closest(".brandCard");
         if (!card) return;
@@ -655,6 +663,18 @@
         setActive(els.type, "data-type", "all");
 
         rerenderAll();
+      });
+
+      // ✅ Toggle "Show more" inside compare table (delegated)
+      document.addEventListener("click", (e) => {
+        const btn = e.target.closest(".moreBtn[data-more='1']");
+        if (!btn) return;
+
+        const clamp = btn.parentElement.querySelector(".cellClamp");
+        if (!clamp) return;
+
+        clamp.classList.toggle("expanded");
+        btn.textContent = clamp.classList.contains("expanded") ? "Show less" : "Show more";
       });
 
       rerenderAll();
