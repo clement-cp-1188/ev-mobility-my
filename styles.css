@@ -38,7 +38,7 @@ h1{ margin:0 0 6px; font-size: 30px; }
   padding: 16px;
   margin: 14px 0;
   box-shadow: 0 10px 25px rgba(0,0,0,.25);
-  overflow: visible; /* helps sticky behavior in some edge cases */
+  overflow: visible;
 }
 
 .controls .row{ display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
@@ -233,7 +233,6 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 .badge{
   display:inline-flex;
   align-items:center;
-  gap:8px;
   font-size:11px;
   padding:6px 10px;
   border-radius:999px;
@@ -263,7 +262,7 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 
 .kv{
   display:grid;
-  grid-template-columns: 150px 1fr;
+  grid-template-columns: 160px 1fr;
   gap: 8px 10px;
   font-size:12px;
 }
@@ -281,7 +280,7 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 }
 .expandBtn:hover{ border-color:#3a4157; }
 
-/* TABLE WRAP: real scroll container */
+/* Table container */
 .tableWrap{
   overflow:auto;
   max-height:70vh;
@@ -290,7 +289,7 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
   border:1px solid rgba(37,42,54,.55);
 }
 
-/* Sticky headers inside .tableWrap */
+/* Sticky headers */
 .tableWrap thead th{
   position: sticky;
   top: 0;
@@ -305,7 +304,6 @@ table{
   border-spacing:0;
 }
 
-/* Default table cell styling */
 thead th{
   text-align:left;
   font-size:12px;
@@ -321,7 +319,7 @@ tbody td{
   vertical-align: top;
 }
 
-/* Chips in table cells: FIX OVERLAP */
+/* Chips inside table cells: WRAP cleanly */
 .brandGridInCell{
   display:flex;
   flex-wrap:wrap;
@@ -329,21 +327,20 @@ tbody td{
   align-items:flex-start;
 }
 
-/* Compare table: content-driven widths + wrapping (fix missing details) */
+/* Compare table sizing */
 .compareTable{
-  width: max-content;     /* shrink to fit columns */
-  min-width: 100%;        /* but fill container at minimum */
-  table-layout: auto;     /* IMPORTANT: no fixed layout */
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
 }
-.compareTable th{ white-space: nowrap; }
 .compareTable td{
   white-space: normal;
   word-break: break-word;
   line-height:1.35;
-  max-width: 320px;       /* prevent insane wide columns */
+  max-width: 320px;
 }
 
-/* Sticky first column (works with sticky header) */
+/* Sticky first column */
 .stickyCol{
   position: sticky;
   left: 0;
@@ -356,51 +353,13 @@ tbody td{
   background: #0f1118;
 }
 
-/* Collapsible long text inside cells */
+/* Collapsible long cells */
 .cellClamp{
-  max-height: 3.8em;      /* ~2-3 lines */
+  max-height: 3.8em;
   overflow: hidden;
-  position: relative;
 }
 .cellClamp.expanded{
   max-height: none;
-}
-
-.takeawaysGrid{
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.takeawayCol{
-  border: 1px solid var(--line);
-  background: #0f1118;
-  border-radius: 14px;
-  padding: 12px;
-}
-
-.takeawayHead{
-  font-weight: 700;
-  font-size: 13px;
-  margin-bottom: 10px;
-  color: var(--text);
-}
-
-.takeawayList{
-  margin: 0;
-  padding-left: 18px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.takeawayList li{
-  margin: 6px 0;
-}
-
-/* Responsive: stack columns on smaller screens */
-@media (max-width: 980px){
-  .takeawaysGrid{ grid-template-columns: 1fr; }
 }
 
 .moreBtn{
@@ -417,6 +376,36 @@ tbody td{
   cursor: pointer;
 }
 .moreBtn:hover{ border-color:#3a4157; color: var(--text); }
+
+/* Takeaways 3-column */
+.takeawaysGrid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+.takeawayCol{
+  border: 1px solid var(--line);
+  background: #0f1118;
+  border-radius: 14px;
+  padding: 12px;
+}
+.takeawayHead{
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.takeawayList{
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.takeawayList li{ margin: 6px 0; }
+@media (max-width: 980px){
+  .takeawaysGrid{ grid-template-columns: 1fr; }
+}
 
 .hint{ color:var(--muted); font-size:12px; margin: 10px 2px 0; }
 .footer{ color:var(--muted); padding: 18px 0 26px; font-size:12px; }
