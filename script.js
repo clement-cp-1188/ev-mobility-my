@@ -24,8 +24,9 @@
       if (missing.length) {
         showError("Missing HTML IDs:\n- " + missing.join("\n- "));
         return;
+        document.querySelectorAll(".moreBtn").forEach(el => el.remove());
       }
-
+      
       const els = {
         mode: document.getElementById("mode"),
         type: document.getElementById("type"),
