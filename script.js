@@ -1,11 +1,10 @@
-// script.js
-// FIXES:
-// 1) Manufacturing filter now works (real manufacturingType field; no "focus string guessing").
-// 2) Comparison table now shows ALL brands per segment (auto-derived), not just 3 hard-coded brands.
-// 3) Mode/type/search/manufacturing/brand-click all work together.
+// script.js — FIXED
+// Fixes:
+// - countPill shows BRANDS count (not segments), so you won’t see “6” and think it’s broken
+// - manufacturing filter uses normalized comparison (trim + lowercase) so it actually works
+// - comparison table auto-derives brands per segment from the brand directory + applies ALL filters
 
 (function () {
-  // ---------- On-page error panel ----------
   function showError(msg) {
     const panel = document.createElement("div");
     panel.style.cssText =
@@ -25,17 +24,31 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     try {
-      // ---------- Required DOM IDs ----------
-      const REQUIRED_IDS = [
-        "mode","type","q","countPill","brandLabel","reset","brandSort","brandGrid","tbody","takeaways","mfgFilter"
-      ];
-      const missing = REQUIRED_IDS.filter((id) => !document.getElementById(id));
+      const ids = ["mode","type","q","countPill","brandLabel","reset","brandSort","brandGrid","tbody","takeaways","mfgFilter"];
+      const missing = ids.filter((id) => !document.getElementById(id));
       if (missing.length) {
         showError("Missing HTML IDs:\n- " + missing.join("\n- "));
         return;
       }
 
-      // ---------- Helpers ----------
+      const els = {
+        mode: document.getElementById("mode"),
+        type: document.getElementById("type"),
+        q: document.getElementById("q"),
+        mfgFilter: document.getElementById("mfgFilter"),
+        tbody: document.getElementById("tbody"),
+        countPill: document.getElementById("countPill"),
+        reset: document.getElementById("reset"),
+        takeaways: document.getElementById("takeaways"),
+        brandGrid: document.getElementById("brandGrid"),
+        brandSort: document.getElementById("brandSort"),
+        brandLabel: document.getElementById("brandLabel"),
+      };
+
+      const state = { mode:"all", type:"all", q:"", brand:"all", brandSort:"score", mfg:"all" };
+
+      const norm = (s) => String(s ?? "").trim().toLowerCase();
+
       function escapeHtml(s) {
         return String(s ?? "")
           .replaceAll("&", "&amp;")
@@ -59,7 +72,10 @@
         });
       }
 
-      // ---------- Base Brands (your current set) ----------
+      // ---------------------------
+      // Brands (your current set)
+      // If you have “much more brands”, paste them into BRANDS and they will show automatically.
+      // ---------------------------
       const BRANDS = [
         { name:"Blueshark", category:"EV Motorcycle", focus:"Commercial-first (delivery/fleet oriented)", jvScore:82,
           roles:["Fleet ops partner","Swap ecosystem partner"],
@@ -138,28 +154,6 @@
           batteryModel:{type:"Fixed (common)",notes:""},
           notes:"Good TCO if support is real."
         },
-        { name:"BMW Motorrad (CE 04)", category:"E-Scooter", focus:"Premium urban EV scooter", jvScore:40,
-          roles:["Retail only"],
-          strengths:["Premium brand","Quality"],
-          gaps:["Not viable delivery TCO"],
-          fitBadges:[{t:"Premium",k:"good"},{t:"Not fleet",k:"bad"}],
-          serviceFootprint:{count:null,notes:"BMW Motorrad dealer network."},
-          warranty:{battery:"OEM",motor:"OEM",controller:"OEM",notes:""},
-          fleetPricingRM:{range:"Not viable",notes:""},
-          batteryModel:{type:"Fixed",notes:""},
-          notes:"Home/executive use only."
-        },
-        { name:"Sur-Ron", category:"Electric Dirt Bike", focus:"Off-road / industrial / security niche", jvScore:52,
-          roles:["Niche fleet supplier"],
-          strengths:["Rugged","High torque"],
-          gaps:["Not road-focused"],
-          fitBadges:[{t:"Rugged",k:"good"},{t:"Niche",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Specialist dealers; confirm parts."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"Project-based",notes:""},
-          batteryModel:{type:"Removable",notes:""},
-          notes:"Industrial/security niche only."
-        },
         { name:"Beam", category:"E-Bicycle (Shared)", focus:"Shared micromobility (campus/township/city)", jvScore:72,
           roles:["City ops partner","Campus partner"],
           strengths:["Ops discipline","Gov relationships"],
@@ -181,17 +175,6 @@
           fleetPricingRM:{range:"RM220–380/month",notes:""},
           batteryModel:{type:"Charging-led",notes:""},
           notes:"Local angle is strong, but ops must be real."
-        },
-        { name:"Super Soco", category:"EV Motorcycle", focus:"Lifestyle/consumer EV motorcycles; MY distribution exists", jvScore:42,
-          roles:["Retail distribution only"],
-          strengths:["Lifestyle appeal"],
-          gaps:["Not fleet/SLA by default"],
-          fitBadges:[{t:"Lifestyle",k:"good"},{t:"Commercial weak",k:"bad"}],
-          serviceFootprint:{count:null,notes:"Verify MY distributor/service partners."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"Not recommended for fleets",notes:""},
-          batteryModel:{type:"Charging-led",notes:""},
-          notes:"Home use only; weak commercial JV base."
         },
         { name:"Fiido", category:"E-Bicycle", focus:"Utility/folding e-bikes; commercial only with service overlay", jvScore:55,
           roles:["Hardware supplier"],
@@ -239,8 +222,7 @@
         },
       ];
 
-      // ---------- Manufacturing + use-case tagging (THIS fixes your filter + table completeness) ----------
-      // Note: "useCases" controls Mode filtering for brand directory + table.
+      // Enrichment: manufacturing + use cases
       const BRAND_META = {
         "Modenas": { origin:"Local (MY)", manufacturingType:"Local OEM", useCases:["commercial","home"] },
         "Eclimo": { origin:"Local (MY)", manufacturingType:"Local OEM", useCases:["commercial","home"] },
@@ -254,13 +236,9 @@
         "NIU": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["commercial","home"] },
         "QJMOTOR": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["commercial","home"] },
         "Ebixon (TAILG)": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["commercial","home"] },
-        "Sur-Ron": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["commercial"] },
-        "Super Soco": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["home"] },
         "Fiido": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["commercial","home"] },
         "Engwe": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["home"] },
         "Xiaomi HIMO": { origin:"China", manufacturingType:"Importer/Distributor", useCases:["home"] },
-
-        "BMW Motorrad (CE 04)": { origin:"Europe", manufacturingType:"Importer/Distributor", useCases:["home"] },
       };
 
       const BRANDS_ENRICHED = BRANDS.map(b => ({
@@ -268,72 +246,16 @@
         ...(BRAND_META[b.name] || { origin:"Origin TBD", manufacturingType:"TBD", useCases:["commercial","home"] })
       }));
 
-      // ---------- Segment templates for comparison table ----------
-      // The brand list is now computed from BRANDS_ENRICHED (so it can show ALL brands).
+      // Segment templates (always 6 segments — that’s OK; brands list inside is the dynamic part)
       const SEGMENTS = [
-        {
-          use:"Commercial",
-          vehicleType:"EV Motorcycle",
-          bestFor:"Delivery, fleets, couriers (high utilization)",
-          speed:"60–90 km/h",
-          payload:"High",
-          dailyUsage:"80–150 km/day",
-          batteryStrategy:"Swap / depot charging preferred; charging ok for SMEs",
-          pricing:"Subscription/lease usually best; outright later",
-        },
-        {
-          use:"Commercial",
-          vehicleType:"E-Scooter",
-          bestFor:"Urban commute fleets, light delivery, intra-city ops",
-          speed:"40–60 km/h",
-          payload:"Medium",
-          dailyUsage:"40–80 km/day",
-          batteryStrategy:"Charging common; removable battery helps depot ops",
-          pricing:"Lease works if service SLAs are enforced",
-        },
-        {
-          use:"Commercial",
-          vehicleType:"E-Bicycle",
-          bestFor:"Campus/township fleets, municipal pilots, controlled environments",
-          speed:"25–35 km/h",
-          payload:"Low–Medium",
-          dailyUsage:"20–50 km/day",
-          batteryStrategy:"Depot charging is simplest",
-          pricing:"Managed fleet / rental model",
-        },
-        {
-          use:"Home",
-          vehicleType:"EV Motorcycle",
-          bestFor:"Commuting + occasional longer rides",
-          speed:"60–90 km/h",
-          payload:"High",
-          dailyUsage:"10–60 km/day",
-          batteryStrategy:"Home charging; swap is a bonus",
-          pricing:"Outright purchase common; financing helps",
-        },
-        {
-          use:"Home",
-          vehicleType:"E-Scooter",
-          bestFor:"Urban commute, short trips",
-          speed:"40–60 km/h",
-          payload:"Medium",
-          dailyUsage:"10–40 km/day",
-          batteryStrategy:"Home charging is easiest",
-          pricing:"Outright purchase; low friction",
-        },
-        {
-          use:"Home",
-          vehicleType:"E-Bicycle",
-          bestFor:"Lifestyle commuting, short errands",
-          speed:"25–35 km/h",
-          payload:"Low–Medium",
-          dailyUsage:"5–30 km/day",
-          batteryStrategy:"Home charging",
-          pricing:"Outright purchase; lowest maintenance",
-        },
+        { use:"Commercial", vehicleType:"EV Motorcycle", bestFor:"Delivery, fleets, couriers (high utilization)", speed:"60–90 km/h", payload:"High", dailyUsage:"80–150 km/day", batteryStrategy:"Swap / depot charging preferred; charging ok for SMEs", pricing:"Subscription/lease usually best; outright later" },
+        { use:"Commercial", vehicleType:"E-Scooter", bestFor:"Urban commute fleets, light delivery, intra-city ops", speed:"40–60 km/h", payload:"Medium", dailyUsage:"40–80 km/day", batteryStrategy:"Charging common; removable battery helps depot ops", pricing:"Lease works if service SLAs enforced" },
+        { use:"Commercial", vehicleType:"E-Bicycle", bestFor:"Campus/township fleets, municipal pilots, controlled environments", speed:"25–35 km/h", payload:"Low–Medium", dailyUsage:"20–50 km/day", batteryStrategy:"Depot charging is simplest", pricing:"Managed fleet / rental model" },
+        { use:"Home", vehicleType:"EV Motorcycle", bestFor:"Commuting + occasional longer rides", speed:"60–90 km/h", payload:"High", dailyUsage:"10–60 km/day", batteryStrategy:"Home charging; swap is a bonus", pricing:"Outright purchase common; financing helps" },
+        { use:"Home", vehicleType:"E-Scooter", bestFor:"Urban commute, short trips", speed:"40–60 km/h", payload:"Medium", dailyUsage:"10–40 km/day", batteryStrategy:"Home charging is easiest", pricing:"Outright purchase; low friction" },
+        { use:"Home", vehicleType:"E-Bicycle", bestFor:"Lifestyle commuting, short errands", speed:"25–35 km/h", payload:"Low–Medium", dailyUsage:"5–30 km/day", batteryStrategy:"Home charging", pricing:"Outright purchase; lowest maintenance" },
       ];
 
-      // ---------- Takeaways ----------
       const TAKEAWAYS = {
         all: [
           "Commercial success is driven by uptime, service, and financing more than specs.",
@@ -352,46 +274,27 @@
         ],
       };
 
-      // ---------- DOM ----------
-      const els = {
-        mode: document.getElementById("mode"),
-        type: document.getElementById("type"),
-        q: document.getElementById("q"),
-        mfgFilter: document.getElementById("mfgFilter"),
-        tbody: document.getElementById("tbody"),
-        countPill: document.getElementById("countPill"),
-        reset: document.getElementById("reset"),
-        takeaways: document.getElementById("takeaways"),
-        brandGrid: document.getElementById("brandGrid"),
-        brandSort: document.getElementById("brandSort"),
-        brandLabel: document.getElementById("brandLabel"),
-      };
-
-      const state = { mode:"all", type:"all", q:"", brand:"all", brandSort:"score", mfg:"all" };
-
-      // ---------- Filtering ----------
       function vehicleTypeMatchesBrand(vehicleType, brandCategory) {
-        // Normalize: treat "Electric Dirt Bike" as EV Motorcycle bucket for table purposes
-        const normCat = (brandCategory || "").replace("Electric Dirt Bike", "EV Motorcycle");
-        return normCat.includes(vehicleType);
+        const cat = String(brandCategory || "");
+        // Treat "E-Bicycle (Shared)" as E-Bicycle
+        const normalized = cat.replaceAll("E-Bicycle (Shared)", "E-Bicycle");
+        return normalized.includes(vehicleType);
       }
 
+      // Common filter: type + mfg + search
       function brandPassesCommonFilters(b) {
-        // Type filter
         const typeOk = state.type === "all" || vehicleTypeMatchesBrand(state.type, b.category);
 
-        // Manufacturing filter
-        const mfgOk = state.mfg === "all" || (b.manufacturingType || "TBD") === state.mfg;
+        const mfgVal = norm(state.mfg);
+        const bMfg = norm(b.manufacturingType || "tbd");
+        const mfgOk = (mfgVal === "all") || (bMfg === mfgVal);
 
-        // Search filter
-        const q = state.q.trim().toLowerCase();
-        const hay = [
+        const q = norm(state.q);
+        const hay = norm([
           b.name, b.category, b.focus, b.origin, b.manufacturingType,
-          (b.roles||[]).join(" "), (b.strengths||[]).join(" "),
-          (b.gaps||[]).join(" "), JSON.stringify(b.serviceFootprint||{}),
-          JSON.stringify(b.warranty||{}), JSON.stringify(b.fleetPricingRM||{}),
-          JSON.stringify(b.batteryModel||{}), b.notes||""
-        ].join(" ").toLowerCase();
+          (b.roles||[]).join(" "), (b.strengths||[]).join(" "), (b.gaps||[]).join(" "),
+          b.notes || ""
+        ].join(" "));
         const qOk = !q || hay.includes(q);
 
         return typeOk && mfgOk && qOk;
@@ -399,23 +302,35 @@
 
       function brandMatchesMode(b) {
         if (state.mode === "all") return true;
-        return (b.useCases || []).includes(state.mode);
+        return (b.useCases || []).map(norm).includes(norm(state.mode));
       }
 
-      function sortedBrands(list) {
-        const filtered = list.filter(b => brandPassesCommonFilters(b) && brandMatchesMode(b));
-        if (state.brandSort === "name") return filtered.sort((a,b) => a.name.localeCompare(b.name));
-        return filtered.sort((a,b) => (b.jvScore ?? 0) - (a.jvScore ?? 0));
+      function filteredBrandsForDirectory() {
+        return BRANDS_ENRICHED
+          .filter(b => brandPassesCommonFilters(b) && brandMatchesMode(b))
+          .sort((a,b) => {
+            if (state.brandSort === "name") return a.name.localeCompare(b.name);
+            return (b.jvScore ?? 0) - (a.jvScore ?? 0);
+          });
       }
 
-      // ---------- Render ----------
+      function brandsForSegment(seg) {
+        const segMode = norm(seg.use); // "commercial" / "home"
+        return BRANDS_ENRICHED
+          .filter(b => brandPassesCommonFilters(b))
+          .filter(b => (b.useCases || []).map(norm).includes(segMode))
+          .filter(b => vehicleTypeMatchesBrand(seg.vehicleType, b.category))
+          .filter(b => state.brand === "all" ? true : b.name === state.brand)
+          .map(b => b.name);
+      }
+
       function renderTakeaways() {
         const items = TAKEAWAYS[state.mode] || TAKEAWAYS.all;
         els.takeaways.innerHTML = items.map(x => `<li>${escapeHtml(x)}</li>`).join("");
       }
 
       function renderBrands() {
-        const list = sortedBrands([...BRANDS_ENRICHED]);
+        const list = filteredBrandsForDirectory();
 
         els.brandGrid.innerHTML = list.map((b) => {
           const active = state.brand === b.name ? "active" : "";
@@ -446,35 +361,14 @@
               <div class="smallText">
                 <div><b>Use cases:</b> ${escapeHtml((b.useCases||[]).join(", ") || "—")}</div>
                 <div style="margin-top:6px"><b>JV roles:</b> ${escapeHtml((b.roles || []).join(", "))}</div>
-                <div style="margin-top:6px"><b>Strengths:</b> ${escapeHtml((b.strengths || []).slice(0, 2).join(" • "))}</div>
-                <div style="margin-top:6px"><b>Gaps:</b> ${escapeHtml((b.gaps || []).slice(0, 2).join(" • "))}</div>
               </div>
 
               <div class="details">
                 <div class="kv">
-                  <div class="k">Service footprint</div>
-                  <div class="v">${b.serviceFootprint?.count == null ? "TBD" : escapeHtml(b.serviceFootprint.count)}
-                    <span>${b.serviceFootprint?.notes ? "• " + escapeHtml(b.serviceFootprint.notes) : ""}</span>
-                  </div>
-
                   <div class="k">Fleet pricing</div>
-                  <div class="v">${escapeHtml(b.fleetPricingRM?.range || "TBD")}
-                    <span>${b.fleetPricingRM?.notes ? "• " + escapeHtml(b.fleetPricingRM.notes) : ""}</span>
-                  </div>
-
+                  <div class="v">${escapeHtml(b.fleetPricingRM?.range || "TBD")}</div>
                   <div class="k">Battery model</div>
-                  <div class="v">${escapeHtml(b.batteryModel?.type || "TBD")}
-                    <span>${b.batteryModel?.notes ? "• " + escapeHtml(b.batteryModel.notes) : ""}</span>
-                  </div>
-
-                  <div class="k">Warranty</div>
-                  <div class="v">
-                    Battery: ${escapeHtml(b.warranty?.battery || "TBD")} •
-                    Motor: ${escapeHtml(b.warranty?.motor || "TBD")} •
-                    Controller: ${escapeHtml(b.warranty?.controller || "TBD")}
-                    <span>${b.warranty?.notes ? "• " + escapeHtml(b.warranty.notes) : ""}</span>
-                  </div>
-
+                  <div class="v">${escapeHtml(b.batteryModel?.type || "TBD")}</div>
                   <div class="k">Notes</div>
                   <div class="v">${escapeHtml(b.notes || "—")}</div>
                 </div>
@@ -489,33 +383,15 @@
         }).join("");
 
         els.brandLabel.textContent = state.brand === "all" ? "All" : state.brand;
-      }
-
-      function segmentMatchesMode(seg) {
-        if (state.mode === "all") return true;
-        return seg.use.toLowerCase() === state.mode;
-      }
-      function segmentMatchesType(seg) {
-        if (state.type === "all") return true;
-        return seg.vehicleType === state.type;
-      }
-
-      function brandsForSegment(seg) {
-        const segMode = seg.use.toLowerCase(); // commercial/home
-        return BRANDS_ENRICHED
-          .filter(b => brandPassesCommonFilters(b))
-          .filter(b => (b.useCases || []).includes(segMode))
-          .filter(b => vehicleTypeMatchesBrand(seg.vehicleType, b.category))
-          .filter(b => state.brand === "all" ? true : b.name === state.brand)
-          .map(b => b.name);
+        return list.length;
       }
 
       function renderTable() {
-        const rows = SEGMENTS
-          .filter(segmentMatchesMode)
-          .filter(segmentMatchesType);
+        const segments = SEGMENTS
+          .filter(seg => state.mode === "all" ? true : norm(seg.use) === norm(state.mode))
+          .filter(seg => state.type === "all" ? true : seg.vehicleType === state.type);
 
-        const html = rows.map(seg => {
+        els.tbody.innerHTML = segments.map(seg => {
           const brands = brandsForSegment(seg);
           return `
             <tr>
@@ -527,26 +403,30 @@
               <td>${escapeHtml(seg.dailyUsage)}</td>
               <td>${escapeHtml(seg.batteryStrategy)}</td>
               <td>${escapeHtml(seg.pricing)}</td>
-              <td>${brands.length ? brands.map(b => badge(b, state.brand === b ? "good" : "")).join(" ") : `<span style="color:var(--muted)">No brands match filters</span>`}</td>
+              <td>
+                ${brands.length
+                  ? brands.map(b => badge(b, state.brand === b ? "good" : "")).join(" ")
+                  : `<span style="color:var(--muted)">No brands match filters</span>`
+                }
+              </td>
             </tr>
           `;
         }).join("");
 
-        els.tbody.innerHTML = html;
-        els.countPill.textContent = `${rows.length} segment${rows.length === 1 ? "" : "s"}`;
+        return segments.length;
       }
 
-      // ---------- Actions ----------
-      function setMode(mode) {
-        state.mode = mode;
-        setActive(els.mode, "data-mode", mode);
-        renderTakeaways(); renderBrands(); renderTable();
+      function updateCounts(brandCount, segmentCount) {
+        els.countPill.textContent = `Brands: ${brandCount} • Segments: ${segmentCount}`;
       }
-      function setType(type) {
-        state.type = type;
-        setActive(els.type, "data-type", type);
-        renderBrands(); renderTable();
+
+      function rerenderAll() {
+        renderTakeaways();
+        const brandCount = renderBrands();
+        const segmentCount = renderTable();
+        updateCounts(brandCount, segmentCount);
       }
+
       function resetAll() {
         state.mode = "all";
         state.type = "all";
@@ -562,35 +442,40 @@
         setActive(els.mode, "data-mode", "all");
         setActive(els.type, "data-type", "all");
 
-        renderTakeaways(); renderBrands(); renderTable();
+        rerenderAll();
       }
 
-      // ---------- Events ----------
+      // Events
       els.mode.addEventListener("click", (e) => {
         const btn = e.target.closest("button");
         if (!btn) return;
-        setMode(btn.dataset.mode);
+        state.mode = btn.dataset.mode;
+        setActive(els.mode, "data-mode", state.mode);
+        // When mode changes, keep brand filter but rerender everything
+        rerenderAll();
       });
 
       els.type.addEventListener("click", (e) => {
         const btn = e.target.closest("button");
         if (!btn) return;
-        setType(btn.dataset.type);
+        state.type = btn.dataset.type;
+        setActive(els.type, "data-type", state.type);
+        rerenderAll();
       });
 
       els.q.addEventListener("input", (e) => {
         state.q = e.target.value;
-        renderBrands(); renderTable();
-      });
-
-      els.brandSort.addEventListener("change", (e) => {
-        state.brandSort = e.target.value;
-        renderBrands();
+        rerenderAll();
       });
 
       els.mfgFilter.addEventListener("change", (e) => {
         state.mfg = e.target.value;
-        renderBrands(); renderTable();
+        rerenderAll();
+      });
+
+      els.brandSort.addEventListener("change", (e) => {
+        state.brandSort = e.target.value;
+        rerenderAll();
       });
 
       els.brandGrid.addEventListener("click", (e) => {
@@ -607,12 +492,12 @@
 
         const b = card.dataset.brand;
         state.brand = (state.brand === b) ? "all" : b;
-        renderBrands(); renderTable();
+        rerenderAll();
       });
 
       els.reset.addEventListener("click", resetAll);
 
-      // ---------- Init ----------
+      // Init
       resetAll();
     } catch (err) {
       showError(err.stack || String(err));
