@@ -5,20 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MY Electric Mobility — JV Viability</title>
 
-  <!-- Cache-bust to avoid GitHub Pages / browser stale assets -->
-  <link rel="stylesheet" href="./styles.css?v=99" />
-    <style>
-    /* If you see this border, CSS is NOT loading (only inline style exists). */
-    body { outline: 6px solid transparent; }
-    </style>
-  <script src="./script.js?v=99" defer></script>
+  <!-- cache-bust -->
+  <link rel="stylesheet" href="./styles.css?v=200" />
+  <script src="./script.js?v=200" defer></script>
 </head>
+
 <body>
   <header class="container">
     <h1>Malaysia Electric Mobility Comparison</h1>
     <p class="sub">
-      Commercial vs Home across EV motorcycles, e-scooters, e-bicycles —
-      brand directory with <b>JV viability</b>, <b>OEM/manufacturing</b>, and ops detail.
+      Commercial vs Home across EV motorcycles, e-scooters, e-bicycles — brand directory with JV viability, OEM/manufacturing, and ops detail.
     </p>
   </header>
 
@@ -69,11 +65,10 @@
         <button id="reset" class="ghost" type="button">Reset</button>
       </div>
 
-      <!-- Multi-select bar -->
       <div class="selectedBar" id="selectedBar">
-        <div class="selectedTitle">Selected brands</div>
+        <div class="selectedTitle"><span class="dot"></span> Selected brands</div>
         <div class="selectedChips" id="selectedChips"></div>
-        <button id="clearSelected" class="miniGhost" type="button">Clear selection</button>
+        <button id="clearSelected" class="clearSelectedBtn" type="button">Clear selection</button>
       </div>
     </section>
 
@@ -90,16 +85,15 @@
       </div>
 
       <div id="brandGrid" class="grid"></div>
-
       <p class="hint">
-        Click cards to multi-select. Expand for ops detail. Filters apply to both directory and comparison.
+        Click card = select/deselect. Click “Expand” = show more info (and it stays expanded even after re-render).
       </p>
     </section>
 
     <section class="card">
       <h2>Commercial vs Home — Brand Coverage</h2>
       <div class="tableWrap">
-        <table>
+        <table class="coverageTable">
           <thead>
             <tr>
               <th class="thUse">Use</th>
@@ -111,40 +105,40 @@
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <p class="hint">Each cell shows brand count + brands matching the current filters and selection.</p>
+      <p class="hint">Each cell shows brand count + brands matching current filters and selection.</p>
     </section>
 
-<section class="card">
-  <div class="sectionHead">
-    <h2>Brands Comparison</h2>
-    <div class="sectionTools">
-      <span class="pill" id="comparePill">Comparing: 0</span>
-    </div>
-  </div>
+    <section class="card">
+      <div class="sectionHead">
+        <h2>Brands Comparison</h2>
+        <div class="sectionTools">
+          <span class="pill" id="comparePill">Comparing: 0</span>
+        </div>
+      </div>
 
-  <p class="hint">
-    Compares <b>selected brands</b>. If none selected, compares all brands matching current filters.
-  </p>
+      <p class="hint">
+        Compares <b>selected brands</b>. If none selected, compares all brands matching current filters.
+      </p>
 
-  <div class="tableWrap">
-    <table class="compareTable">
-      <thead>
-        <tr>
-          <th class="stickyCol" style="min-width:180px">Brand</th>
-          <th style="min-width:140px">Origin</th>
-          <th style="min-width:190px">Manufacturing</th>
-          <th style="min-width:220px">Vehicle Type(s)</th>
-          <th style="min-width:170px">Use Case(s)</th>
-          <th style="min-width:110px">JV Score</th>
-          <th style="min-width:320px">JV Roles</th>
-          <th style="min-width:360px">Focus</th>
-        </tr>
-      </thead>
-      <tbody id="brandCompareBody"></tbody>
-    </table>
-  </div>
-</section>
-    
+      <div class="tableWrap">
+        <table class="compareTable">
+          <thead>
+            <tr>
+              <th class="stickyCol" style="min-width:180px">Brand</th>
+              <th style="min-width:140px">Origin</th>
+              <th style="min-width:190px">Manufacturing</th>
+              <th style="min-width:220px">Vehicle Type(s)</th>
+              <th style="min-width:170px">Use Case(s)</th>
+              <th style="min-width:110px">JV Score</th>
+              <th style="min-width:340px">JV Roles</th>
+              <th style="min-width:360px">Focus</th>
+            </tr>
+          </thead>
+          <tbody id="brandCompareBody"></tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="card">
       <h2>Quick Takeaways</h2>
       <ul id="takeaways"></ul>
@@ -152,10 +146,7 @@
   </main>
 
   <footer class="container footer">
-    <span>Static site • GitHub Pages friendly • Multi-select brands to focus the comparison</span>
+    <span>Static site • GitHub Pages friendly</span>
   </footer>
-
-  <!-- Cache-bust -->
-  <script src="./script.js?v=4" defer></script>
 </body>
 </html>
