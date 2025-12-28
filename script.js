@@ -1,10 +1,3 @@
-// script.js — FULL UPDATED (counts fixed + manufacturing/table filters solid)
-// Key fixes:
-// - Count pill shows: Directory brands, Table brands (unique), Segments
-// - Manufacturing filter uses normalized comparison (trim + lowercase)
-// - Comparison table auto-derives brands from directory and applies ALL filters
-// - Avoids misleading “6” by showing what 6 actually means (segments)
-
 (function () {
   function showError(msg) {
     const panel = document.createElement("div");
@@ -49,7 +42,6 @@
       };
 
       const state = { mode:"all", type:"all", q:"", brand:"all", brandSort:"score", mfg:"all" };
-
       const norm = (s) => String(s ?? "").trim().toLowerCase();
 
       function escapeHtml(s) {
@@ -60,15 +52,18 @@
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
       }
+
       function badge(text, kind) {
         const k = kind ? ` ${kind}` : "";
         return `<span class="badge${k}">${escapeHtml(text)}</span>`;
       }
+
       function scoreColor(score) {
         if (score >= 75) return "var(--good)";
         if (score >= 55) return "var(--warn)";
         return "var(--bad)";
       }
+
       function setActive(container, attr, value) {
         [...container.querySelectorAll("button")].forEach((btn) => {
           btn.classList.toggle("active", btn.getAttribute(attr) === value);
@@ -76,8 +71,7 @@
       }
 
       // -----------------------
-      // BRAND DATA
-      // NOTE: If you have "much more brands", add them here (or tell me and I'll expand with MY market brands).
+      // BRAND DATA (add more brands here and they will auto-render everywhere)
       // -----------------------
       const BRANDS = [
         { name:"Blueshark", category:"EV Motorcycle", focus:"Commercial-first (delivery/fleet oriented)", jvScore:82,
@@ -85,109 +79,69 @@
           strengths:["Commercial design","Battery swapping","Uptime narrative"],
           gaps:["Scaling early","Capex higher"],
           fitBadges:[{t:"Fleet-ready",k:"good"},{t:"Swap",k:"good"},{t:"Ops needed",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Confirm MY service points & swap locations."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:"Confirm commercial-use clauses."},
-          fleetPricingRM:{range:"RM250–400/month",notes:"Bundle dependent."},
-          batteryModel:{type:"Swappable",notes:"Key for high-uptime fleets."},
-          notes:"Best for pilots where downtime is measurable."
+          fleetPricingRM:{range:"RM250–400/month"}, batteryModel:{type:"Swappable"}, notes:"Best for pilots where downtime is measurable."
         },
         { name:"Modenas", category:"E-Scooter", focus:"Malaysia OEM; delivery-capable scooters", jvScore:76,
           roles:["OEM/CKD partner","Fleet anchor","After-sales backbone"],
           strengths:["Local OEM credibility","Parts ecosystem","Compliance pathway"],
           gaps:["Fleet SLA discipline required"],
           fitBadges:[{t:"Local OEM",k:"good"},{t:"Delivery",k:"good"},{t:"SLA required",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Fill in dealer footprint by state."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM180–350/month",notes:"Model + bundle dependent."},
-          batteryModel:{type:"Model dependent",notes:"Confirm removable battery by SKU."},
-          notes:"Strong MY JV anchor if ops KPIs are enforced."
+          fleetPricingRM:{range:"RM180–350/month"}, batteryModel:{type:"Model dependent"}, notes:"Strong MY JV anchor if ops KPIs are enforced."
         },
         { name:"Treeletrik", category:"EV Motorcycle", focus:"Mass commuter + light commercial", jvScore:70,
           roles:["Local distributor","Service network partner"],
           strengths:["Local brand presence","Value pricing potential"],
           gaps:["Fleet ops maturity varies"],
           fitBadges:[{t:"Local presence",k:"good"},{t:"Value",k:"good"},{t:"Dealer variance",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Dealer-led network; verify turnaround time."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM200–350/month",notes:""},
-          batteryModel:{type:"Charging-led (common)",notes:""},
-          notes:"Good if your JV imposes service KPIs."
+          fleetPricingRM:{range:"RM200–350/month"}, batteryModel:{type:"Charging-led"}, notes:"Good if your JV imposes service KPIs."
         },
         { name:"Yadea", category:"EV Motorcycle / E-Scooter / E-Bicycle", focus:"Mass-market, price-led", jvScore:60,
           roles:["Hardware supplier","Distributor program partner"],
           strengths:["Cost scale","Broad SKU range"],
           gaps:["Service quality varies by distributor"],
           fitBadges:[{t:"Cost scale",k:"good"},{t:"Ops-dependent",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Distributor quality matters."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:"Lock parts SLA for fleets."},
-          fleetPricingRM:{range:"RM160–280/month",notes:"Beware price wars."},
-          batteryModel:{type:"SKU dependent",notes:""},
-          notes:"Fleet use only with strict contract terms."
+          fleetPricingRM:{range:"RM160–280/month"}, batteryModel:{type:"SKU dependent"}, notes:"Fleet use only with strict contract terms."
         },
         { name:"NIU", category:"E-Scooter", focus:"Consumer-first; commercial possible with ops overlay", jvScore:62,
           roles:["Hardware supplier","Retail + fleet program partner"],
           strengths:["Brand recognition","Telemetry/app DNA"],
           gaps:["SLA not default"],
           fitBadges:[{t:"Brand",k:"good"},{t:"Ops overlay",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Map service centers + parts lead time."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM180–300/month",notes:""},
-          batteryModel:{type:"SKU dependent",notes:""},
-          notes:"Works if YOU own uptime ops."
+          fleetPricingRM:{range:"RM180–300/month"}, batteryModel:{type:"SKU dependent"}, notes:"Works if YOU own uptime ops."
         },
-        { name:"QJMOTOR", category:"EV Motorcycle / E-Scooter", focus:"MForce-backed brand; EV line growing", jvScore:68,
+        { name:"QJMOTOR", category:"EV Motorcycle / E-Scooter", focus:"Distributor-backed; EV line growing", jvScore:68,
           roles:["Distributor JV","OEM supplier"],
           strengths:["Distributor strength","Build quality"],
           gaps:["EV portfolio maturing"],
           fitBadges:[{t:"Distributor strength",k:"good"},{t:"EV line evolving",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Confirm EV-specific spares & technicians."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM180–320/month",notes:""},
-          batteryModel:{type:"Fixed (common)",notes:""},
-          notes:"Solid option if after-sales is proven."
+          fleetPricingRM:{range:"RM180–320/month"}, batteryModel:{type:"Fixed (common)"}, notes:"Solid option if after-sales is proven."
         },
         { name:"Ebixon (TAILG)", category:"EV Motorcycle / E-Scooter", focus:"China OEM with MY presence", jvScore:63,
           roles:["Hardware supplier","Value fleet option"],
           strengths:["Aggressive pricing","Commercial SKUs possible"],
           gaps:["Distributor quality critical"],
           fitBadges:[{t:"Value fleet",k:"good"},{t:"Distributor risk",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Confirm distributor SLA & spares policy."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM160–300/month",notes:""},
-          batteryModel:{type:"Fixed (common)",notes:""},
-          notes:"Good TCO if support is real."
+          fleetPricingRM:{range:"RM160–300/month"}, batteryModel:{type:"Fixed (common)"}, notes:"Good TCO if support is real."
         },
         { name:"Beam", category:"E-Bicycle (Shared)", focus:"Shared micromobility (campus/township/city)", jvScore:72,
           roles:["City ops partner","Campus partner"],
           strengths:["Ops discipline","Gov relationships"],
           gaps:["Not delivery rider model"],
           fitBadges:[{t:"Ops-strong",k:"good"},{t:"Not delivery",k:"warn"}],
-          serviceFootprint:{count:null,notes:"List operating zones + maintenance model."},
-          warranty:{battery:"N/A",motor:"N/A",controller:"N/A",notes:""},
-          fleetPricingRM:{range:"Shared model",notes:""},
-          batteryModel:{type:"Depot charging",notes:""},
-          notes:"Great for campuses/townships; ops benchmark."
+          notes:"Good for campuses/townships; ops benchmark."
         },
         { name:"Eclimo", category:"EV Motorcycle", focus:"Malaysia-built electric motorcycles; pilot-friendly", jvScore:60,
           roles:["Local tech/vehicle partner","Pilot fleet partner"],
           strengths:["Local presence","JV narrative"],
           gaps:["Scale & service footprint must be proven"],
           fitBadges:[{t:"Local",k:"good"},{t:"Pilot-ready",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Confirm operating states + workshop partners."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM220–380/month",notes:""},
-          batteryModel:{type:"Charging-led",notes:""},
           notes:"Local angle is strong, but ops must be real."
         },
-        { name:"Fiido", category:"E-Bicycle", focus:"Utility/folding e-bikes; commercial only with service overlay", jvScore:55,
+        { name:"Fiido", category:"E-Bicycle", focus:"Utility/folding e-bikes", jvScore:55,
           roles:["Hardware supplier"],
           strengths:["Affordable","Compact"],
           gaps:["Not SLA-ready by default"],
           fitBadges:[{t:"Affordable",k:"good"},{t:"Service overlay",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Depends on reseller; require spares stock."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM80–160/month",notes:"Light duty only."},
-          batteryModel:{type:"Charging-led",notes:""},
           notes:"Home or staff mobility; light duty."
         },
         { name:"Engwe", category:"E-Bicycle", focus:"Consumer utility e-bikes; MY availability via retailers", jvScore:54,
@@ -195,10 +149,6 @@
           strengths:["Low price utility SKUs"],
           gaps:["Retail support only"],
           fitBadges:[{t:"Low cost",k:"good"},{t:"Retail-driven",k:"warn"}],
-          serviceFootprint:{count:null,notes:"Verify seller warranty + spares."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"RM70–160/month",notes:""},
-          batteryModel:{type:"Charging-led (model dependent)",notes:""},
           notes:"Mostly home use unless you run servicing."
         },
         { name:"EFORGE", category:"E-Bicycle", focus:"Malaysia e-bike retailer / house brand", jvScore:50,
@@ -206,10 +156,6 @@
           strengths:["Local retail support"],
           gaps:["No fleet DNA"],
           fitBadges:[{t:"Local retail",k:"good"},{t:"Fleet weak",k:"bad"}],
-          serviceFootprint:{count:null,notes:"Confirm workshop + warranty process."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"Home use",notes:""},
-          batteryModel:{type:"Charging-led",notes:""},
           notes:"Home/casual use."
         },
         { name:"Xiaomi HIMO", category:"E-Bicycle", focus:"Consumer e-bike", jvScore:48,
@@ -217,15 +163,11 @@
           strengths:["Brand recognition"],
           gaps:["No fleet support"],
           fitBadges:[{t:"Consumer",k:"good"},{t:"Fleet weak",k:"bad"}],
-          serviceFootprint:{count:null,notes:"Verify MY warranty/support source."},
-          warranty:{battery:"TBD",motor:"TBD",controller:"TBD",notes:""},
-          fleetPricingRM:{range:"Home use",notes:""},
-          batteryModel:{type:"Charging-led",notes:""},
           notes:"Personal mobility only."
         },
       ];
 
-      // Enrichment for manufacturing + useCases (controls “Mode” filter)
+      // Manufacturing + useCases (this is what Mode/Manufacturing filters use)
       const BRAND_META = {
         "Modenas": { origin:"Local (MY)", manufacturingType:"Local OEM", useCases:["commercial","home"] },
         "Eclimo": { origin:"Local (MY)", manufacturingType:"Local OEM", useCases:["commercial","home"] },
@@ -249,33 +191,26 @@
         ...(BRAND_META[b.name] || { origin:"Origin TBD", manufacturingType:"TBD", useCases:["commercial","home"] })
       }));
 
-      // 6 structural segments = 2 use buckets x 3 vehicle types
-      const SEGMENTS = [
-        { use:"Commercial", vehicleType:"EV Motorcycle", bestFor:"Delivery, fleets, couriers (high utilization)", speed:"60–90 km/h", payload:"High", dailyUsage:"80–150 km/day", batteryStrategy:"Swap / depot charging preferred; charging ok for SMEs", pricing:"Subscription/lease usually best; outright later" },
-        { use:"Commercial", vehicleType:"E-Scooter", bestFor:"Urban commute fleets, light delivery, intra-city ops", speed:"40–60 km/h", payload:"Medium", dailyUsage:"40–80 km/day", batteryStrategy:"Charging common; removable battery helps depot ops", pricing:"Lease works if service SLAs enforced" },
-        { use:"Commercial", vehicleType:"E-Bicycle", bestFor:"Campus/township fleets, municipal pilots, controlled environments", speed:"25–35 km/h", payload:"Low–Medium", dailyUsage:"20–50 km/day", batteryStrategy:"Depot charging is simplest", pricing:"Managed fleet / rental model" },
-        { use:"Home", vehicleType:"EV Motorcycle", bestFor:"Commuting + occasional longer rides", speed:"60–90 km/h", payload:"High", dailyUsage:"10–60 km/day", batteryStrategy:"Home charging; swap is a bonus", pricing:"Outright purchase common; financing helps" },
-        { use:"Home", vehicleType:"E-Scooter", bestFor:"Urban commute, short trips", speed:"40–60 km/h", payload:"Medium", dailyUsage:"10–40 km/day", batteryStrategy:"Home charging is easiest", pricing:"Outright purchase; low friction" },
-        { use:"Home", vehicleType:"E-Bicycle", bestFor:"Lifestyle commuting, short errands", speed:"25–35 km/h", payload:"Low–Medium", dailyUsage:"5–30 km/day", batteryStrategy:"Home charging", pricing:"Outright purchase; lowest maintenance" },
-      ];
-
       const TAKEAWAYS = {
         all: [
           "Commercial success is driven by uptime, service, and financing more than specs.",
           "OEM/local helps parts and compliance, but ops maturity still wins.",
-          "Outright sales work best after spares and service are stable.",
+          "Outright sales works best after spares + service are stable.",
         ],
         commercial: [
           "Fleet-first accelerates learning and utilization.",
-          "Battery strategy (swap vs depot vs charge) must be chosen upfront.",
-          "Mediocre vehicle + excellent ops beats great vehicle + weak ops.",
+          "Battery strategy must be chosen upfront (swap vs depot vs charging).",
+          "Great ops beats great hardware.",
         ],
         home: [
-          "Home charging simplicity drives adoption (especially e-bikes and e-scooters).",
+          "Home charging simplicity drives adoption.",
           "EV motorcycles need strong after-sales to avoid ownership friction.",
-          "Financing expands the reachable market significantly.",
+          "Financing expands reachable market.",
         ],
       };
+
+      const VEHICLE_TYPES = ["EV Motorcycle", "E-Scooter", "E-Bicycle"];
+      const USES = ["Commercial", "Home"];
 
       function vehicleTypeMatchesBrand(vehicleType, brandCategory) {
         const cat = String(brandCategory || "");
@@ -314,19 +249,23 @@
         });
       }
 
-      function brandsForSegment(seg) {
-        const segMode = norm(seg.use);
+      function brandsFor(useLabel, vehicleType) {
+        const useMode = norm(useLabel); // commercial/home
         return BRANDS_ENRICHED
           .filter(b => brandPassesCommonFilters(b))
-          .filter(b => (b.useCases || []).map(norm).includes(segMode))
-          .filter(b => vehicleTypeMatchesBrand(seg.vehicleType, b.category))
+          .filter(b => (b.useCases || []).map(norm).includes(useMode))
+          .filter(b => vehicleTypeMatchesBrand(vehicleType, b.category))
           .filter(b => state.brand === "all" ? true : b.name === state.brand)
           .map(b => b.name);
       }
 
-      function countUniqueBrandsInTable(segments) {
+      function uniqueBrandCountForMode(mode) {
         const set = new Set();
-        segments.forEach(seg => brandsForSegment(seg).forEach(name => set.add(name)));
+        BRANDS_ENRICHED
+          .filter(b => brandPassesCommonFilters(b))
+          .filter(b => mode === "all" ? true : (b.useCases || []).map(norm).includes(norm(mode)))
+          .filter(b => state.brand === "all" ? true : b.name === state.brand)
+          .forEach(b => set.add(b.name));
         return set.size;
       }
 
@@ -335,7 +274,9 @@
         els.takeaways.innerHTML = items.map(x => `<li>${escapeHtml(x)}</li>`).join("");
       }
 
-      function renderBrandGrid(list) {
+      function renderBrands() {
+        const list = filteredBrandsForDirectory();
+
         els.brandGrid.innerHTML = list.map((b) => {
           const active = state.brand === b.name ? "active" : "";
           const col = scoreColor(b.jvScore ?? 0);
@@ -379,7 +320,7 @@
               </div>
 
               <div class="expandRow">
-                <span class="brandMeta">Click card = filter table</span>
+                <span class="brandMeta">Click card = filter</span>
                 <button class="expandBtn" data-expand="1" type="button">Expand</button>
               </div>
             </div>
@@ -389,48 +330,78 @@
         els.brandLabel.textContent = state.brand === "all" ? "All" : state.brand;
       }
 
-      function renderTable(segments) {
-        els.tbody.innerHTML = segments.map(seg => {
-          const brands = brandsForSegment(seg);
+      function renderComparisonTable() {
+        // Only 2 rows (Commercial + Home), not 3 or 6 segments.
+        const rows = USES
+          .filter(u => state.mode === "all" ? true : norm(u) === norm(state.mode));
+
+        els.tbody.innerHTML = rows.map(useLabel => {
+          const cells = VEHICLE_TYPES
+            .filter(t => state.type === "all" ? true : t === state.type)
+            .map(vehicleType => {
+              const list = brandsFor(useLabel, vehicleType);
+              const chips = list.length
+                ? `<div class="brandList">${list.map(n => badge(n, state.brand === n ? "good" : "")).join("")}</div>`
+                : `<div class="emptyCell">No brands match</div>`;
+
+              return `
+                <td>
+                  <div class="cellHead">
+                    <div class="cellCount">${list.length} brand${list.length === 1 ? "" : "s"}</div>
+                  </div>
+                  ${chips}
+                </td>
+              `;
+            });
+
+          // If a type filter is selected, headers still show 3 columns in HTML.
+          // We keep layout stable by filling missing columns with empty cells.
+          // So we always output 3 cells in order EV Motorcycle, E-Scooter, E-Bicycle.
+          const cellByType = {};
+          VEHICLE_TYPES.forEach(t => cellByType[t] = `<td><div class="emptyCell">—</div></td>`);
+          VEHICLE_TYPES.forEach(t => {
+            if (state.type === "all" || state.type === t) {
+              const list = brandsFor(useLabel, t);
+              const chips = list.length
+                ? `<div class="brandList">${list.map(n => badge(n, state.brand === n ? "good" : "")).join("")}</div>`
+                : `<div class="emptyCell">No brands match</div>`;
+              cellByType[t] = `
+                <td>
+                  <div class="cellHead">
+                    <div class="cellCount">${list.length} brand${list.length === 1 ? "" : "s"}</div>
+                  </div>
+                  ${chips}
+                </td>
+              `;
+            }
+          });
+
           return `
             <tr>
-              <td>${badge(seg.use)}</td>
-              <td><b>${escapeHtml(seg.vehicleType)}</b></td>
-              <td>${escapeHtml(seg.bestFor)}</td>
-              <td>${escapeHtml(seg.speed)}</td>
-              <td>${escapeHtml(seg.payload)}</td>
-              <td>${escapeHtml(seg.dailyUsage)}</td>
-              <td>${escapeHtml(seg.batteryStrategy)}</td>
-              <td>${escapeHtml(seg.pricing)}</td>
-              <td>
-                ${brands.length
-                  ? brands.map(b => badge(b, state.brand === b ? "good" : "")).join(" ")
-                  : `<span style="color:var(--muted)">No brands match filters</span>`
-                }
-              </td>
+              <td><b>${escapeHtml(useLabel)}</b></td>
+              ${cellByType["EV Motorcycle"]}
+              ${cellByType["E-Scooter"]}
+              ${cellByType["E-Bicycle"]}
             </tr>
           `;
         }).join("");
       }
 
-      function currentSegments() {
-        return SEGMENTS
-          .filter(seg => state.mode === "all" ? true : norm(seg.use) === norm(state.mode))
-          .filter(seg => state.type === "all" ? true : seg.vehicleType === state.type);
+      function updateCounts() {
+        const commercial = uniqueBrandCountForMode("commercial");
+        const home = uniqueBrandCountForMode("home");
+
+        // Total shown respects current mode filter (All/commercial/home)
+        const totalShown = uniqueBrandCountForMode(state.mode === "all" ? "all" : state.mode);
+
+        els.countPill.textContent = `Commercial: ${commercial} • Home: ${home} • Total shown: ${totalShown}`;
       }
 
       function rerenderAll() {
         renderTakeaways();
-
-        const dirBrands = filteredBrandsForDirectory();
-        renderBrandGrid(dirBrands);
-
-        const segs = currentSegments();
-        renderTable(segs);
-
-        const tableBrandCount = countUniqueBrandsInTable(segs);
-        els.countPill.textContent =
-          `Directory brands: ${dirBrands.length} • Table brands: ${tableBrandCount} • Segments: ${segs.length}`;
+        renderBrands();
+        renderComparisonTable();
+        updateCounts();
       }
 
       function resetAll() {
