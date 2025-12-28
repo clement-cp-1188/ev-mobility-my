@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,7 +12,7 @@
     <h1>Malaysia Electric Mobility Comparison</h1>
     <p class="sub">
       Commercial vs Home across EV motorcycles, e-scooters, e-bicycles —
-      plus a brand directory with <b>JV viability</b> and operational detail.
+      plus a brand directory with <b>JV viability</b>, <b>OEM/local categories</b>, and ops detail.
     </p>
   </header>
 
@@ -21,32 +22,45 @@
         <div class="control">
           <label>Mode</label>
           <div class="segmented" id="mode">
-            <button data-mode="all" class="active">All</button>
-            <button data-mode="commercial">Commercial</button>
-            <button data-mode="home">Home</button>
+            <button data-mode="all" class="active" type="button">All</button>
+            <button data-mode="commercial" type="button">Commercial</button>
+            <button data-mode="home" type="button">Home</button>
           </div>
         </div>
 
         <div class="control">
           <label>Vehicle type</label>
           <div class="segmented" id="type">
-            <button data-type="all" class="active">All</button>
-            <button data-type="EV Motorcycle">EV Motorcycle</button>
-            <button data-type="E-Scooter">E-Scooter</button>
-            <button data-type="E-Bicycle">E-Bicycle</button>
+            <button data-type="all" class="active" type="button">All</button>
+            <button data-type="EV Motorcycle" type="button">EV Motorcycle</button>
+            <button data-type="E-Scooter" type="button">E-Scooter</button>
+            <button data-type="E-Bicycle" type="button">E-Bicycle</button>
           </div>
+        </div>
+
+        <div class="control">
+          <label>Manufacturing</label>
+          <select id="mfgFilter">
+            <option value="all">All</option>
+            <option value="Local OEM">Local OEM</option>
+            <option value="Local Assembly/CKD">Local Assembly/CKD</option>
+            <option value="Importer/Distributor">Importer/Distributor</option>
+            <option value="Retailer/House brand">Retailer/House brand</option>
+            <option value="Shared Operator">Shared Operator</option>
+            <option value="TBD">TBD</option>
+          </select>
         </div>
 
         <div class="control grow">
           <label>Search (brands / notes)</label>
-          <input id="q" type="search" placeholder="e.g., Blueshark, NIU, swapping, warranty, fleet..." />
+          <input id="q" type="search" placeholder="e.g., Blueshark, swapping, warranty, fleet..." />
         </div>
       </div>
 
       <div class="row small">
         <div class="pill" id="countPill">0 results</div>
         <div class="pill">Brand: <b id="brandLabel">All</b></div>
-        <button id="reset" class="ghost">Reset</button>
+        <button id="reset" class="ghost" type="button">Reset</button>
       </div>
     </section>
 
@@ -63,8 +77,10 @@
       </div>
 
       <div id="brandGrid" class="grid"></div>
+
       <p class="hint">
-        Scores are heuristic. Use the “Evidence” links field to pin each claim to a source during diligence.
+        Scores are heuristic. Use the “Evidence” field to pin claims to sources during diligence.
+        Click a brand card to filter the comparison table.
       </p>
     </section>
 
@@ -97,9 +113,10 @@
   </main>
 
   <footer class="container footer">
-    <span>Static site • GitHub Pages friendly • Click brand cards to filter</span>
+    <span>Static site • GitHub Pages friendly • Click brand cards to filter • Expand cards for ops detail</span>
   </footer>
 
-  <script src="./script.js?v=20251228" defer></script>
+  <!-- Use defer so DOM exists before script runs -->
+  <script src="./script.js" defer></script>
 </body>
 </html>
