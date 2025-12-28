@@ -416,16 +416,31 @@
         return segments.length;
       }
 
-      function updateCounts(brandCount, segmentCount) {
-        els.countPill.textContent = `Brands: ${brandCount} • Segments: ${segmentCount}`;
-      }
+      function countBrandsInTable(segments) {
+  const set = new Set();
+  segments.forEach(seg => {
+    brandsForSegment(seg).forEach(name => set.add(name));
+  });
+  return set.size;
+}
 
-      function rerenderAll() {
-        renderTakeaways();
-        const brandCount = renderBrands();
-        const segmentCount = renderTable();
-        updateCounts(brandCount, segmentCount);
-      }
+function rerenderAll() {
+  renderTakeaways();
+
+  const dirBrands = filteredBrandsForDirectory(); // array
+  renderBrandsFromList(dirBrands);                // render using list
+
+  const segments = SEGMENTS
+    .filter(seg => state.mode === "all" ? true : norm(seg.use) === norm(state.mode))
+    .filter(seg => state.type === "all" ? true : seg.vehicleType === state.type);
+
+  renderTableFromSegments(segments);              // render using segments
+
+  const tableBrandCount = countBrandsInTable(segments);
+
+  els.countPill.textContent =
+    `Directory brands: ${dirBrands.length} • Table brands: ${tableBrandCount} • Segments: ${segments.length}`;
+}
 
       function resetAll() {
         state.mode = "all";
