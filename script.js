@@ -12,11 +12,13 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     try {
+      // IDs that must exist
       const required = [
-        "mode","type","q","countPill","brandLabel","reset","brandSort",
-        "brandGrid","tbody","takeaways","mfgFilter",
+        "mode","type","mfgFilter","q","countPill","brandLabel","reset","brandSort",
+        "brandGrid","tbody",
         "selectedBar","selectedChips","clearSelected",
-        "brandCompareBody","comparePill"
+        "brandCompareBody","comparePill",
+        "takeawaysAll","takeawaysCommercial","takeawaysHome"
       ];
       const missing = required.filter(id => !document.getElementById(id));
       if (missing.length) {
@@ -27,8 +29,8 @@
       const els = {
         mode: document.getElementById("mode"),
         type: document.getElementById("type"),
-        q: document.getElementById("q"),
         mfgFilter: document.getElementById("mfgFilter"),
+        q: document.getElementById("q"),
         countPill: document.getElementById("countPill"),
         brandLabel: document.getElementById("brandLabel"),
         reset: document.getElementById("reset"),
@@ -40,6 +42,9 @@
         clearSelected: document.getElementById("clearSelected"),
         brandCompareBody: document.getElementById("brandCompareBody"),
         comparePill: document.getElementById("comparePill"),
+        takeAll: document.getElementById("takeawaysAll"),
+        takeCom: document.getElementById("takeawaysCommercial"),
+        takeHome: document.getElementById("takeawaysHome"),
       };
 
       const state = {
@@ -70,6 +75,25 @@
           btn.classList.toggle("active", btn.getAttribute(attr) === value);
         });
       }
+
+      // ---------- TAKEAWAYS (always render all 3) ----------
+      const TAKEAWAYS = {
+        all: [
+          "Commercial success is driven by uptime, service, and financing more than specs.",
+          "OEM/local helps parts and compliance, but ops maturity still wins.",
+          "Outright sales works best after spares + service are stable.",
+        ],
+        commercial: [
+          "Fleet-first accelerates learning and utilization.",
+          "Battery strategy must be chosen upfront (swap vs depot vs charging).",
+          "Great ops beats great hardware.",
+        ],
+        home: [
+          "Home charging simplicity drives adoption.",
+          "EV motorcycles need strong after-sales to avoid ownership friction.",
+          "Financing expands the reachable market.",
+        ],
+      };
 
       // ---------- DATA ----------
       const BRANDS = [
@@ -293,25 +317,9 @@
         ...(BRAND_META[b.name] || { origin:"Origin TBD", manufacturingType:"TBD", useCases:["commercial","home"] })
       }));
 
-      const TAKEAWAYS = {
-        all: [
-          "Commercial success is driven by uptime, service, and financing more than specs.",
-          "OEM/local helps parts and compliance, but ops maturity still wins.",
-          "Outright sales works best after spares + service are stable.",
-        ],
-        commercial: [
-          "Fleet-first accelerates learning and utilization.",
-          "Battery strategy must be chosen upfront (swap vs depot vs charging).",
-          "Great ops beats great hardware.",
-        ],
-        home: [
-          "Home charging simplicity drives adoption.",
-          "EV motorcycles need strong after-sales to avoid ownership friction.",
-          "Financing expands reachable market.",
-        ],
-      };
+      const USES = ["Commercial","Home"];
 
-      // ---------- FILTERING ----------
+      // ---------- FILTER HELPERS ----------
       function vehicleTypeMatchesBrand(vehicleType, brandCategory) {
         const cat = String(brandCategory || "");
         const normalized = cat.replaceAll("E-Bicycle (Shared)", "E-Bicycle");
@@ -383,19 +391,9 @@
 
       // ---------- RENDER ----------
       function renderTakeaways() {
-        const allEl = document.getElementById("takeawaysAll");
-        const comEl = document.getElementById("takeawaysCommercial");
-        const homeEl = document.getElementById("takeawaysHome");
-      
-        if (!allEl || !comEl || !homeEl) return;
-      
-        const itemsAll = TAKEAWAYS.all || [];
-        const itemsCom = TAKEAWAYS.commercial || [];
-        const itemsHome = TAKEAWAYS.home || [];
-      
-        allEl.innerHTML = itemsAll.map(x => `<li>${esc(x)}</li>`).join("");
-        comEl.innerHTML = itemsCom.map(x => `<li>${esc(x)}</li>`).join("");
-        homeEl.innerHTML = itemsHome.map(x => `<li>${esc(x)}</li>`).join("");
+        els.takeAll.innerHTML = TAKEAWAYS.all.map(x => `<li>${esc(x)}</li>`).join("");
+        els.takeCom.innerHTML = TAKEAWAYS.commercial.map(x => `<li>${esc(x)}</li>`).join("");
+        els.takeHome.innerHTML = TAKEAWAYS.home.map(x => `<li>${esc(x)}</li>`).join("");
       }
 
       function renderSelectedBar() {
@@ -471,15 +469,14 @@
 
         function cell(useLabel, type) {
           if (state.type !== "all" && state.type !== type) {
-            return `<td><div class="emptyCell">—</div></td>`;
+            return `<td>—</td>`;
           }
           const list = brandsFor(useLabel, type);
           if (!list.length) {
-            return `<td><div class="cellHead"><div class="cellCount">0 brands</div></div><div class="emptyCell">No brands match</div></td>`;
+            return `<td><span style="color:#9aa4b2">No brands match</span></td>`;
           }
           return `
             <td>
-              <div class="cellHead"><div class="cellCount">${list.length} brand${list.length===1?"":"s"}</div></div>
               <div class="brandGridInCell">
                 ${list.map(n => `<span class="badge info">${esc(n)}</span>`).join("")}
               </div>
@@ -618,7 +615,7 @@
         rerenderAll();
       });
 
-      // Expand card vs select
+      // Directory click: expand vs select
       els.brandGrid.addEventListener("click", (e) => {
         const card = e.target.closest(".brandCard");
         if (!card) return;
@@ -642,6 +639,7 @@
         rerenderAll();
       });
 
+      // Remove chip
       els.selectedChips.addEventListener("click", (e) => {
         const rm = e.target.closest("[data-remove]");
         if (!rm) return;
@@ -650,11 +648,13 @@
         rerenderAll();
       });
 
+      // Clear selection
       els.clearSelected.addEventListener("click", () => {
         state.selected.clear();
         rerenderAll();
       });
 
+      // Reset all
       els.reset.addEventListener("click", () => {
         state.mode = "all";
         state.type = "all";
@@ -673,7 +673,7 @@
         rerenderAll();
       });
 
-      // ✅ Toggle "Show more" inside compare table (delegated)
+      // Toggle "Show more" inside compare table
       document.addEventListener("click", (e) => {
         const btn = e.target.closest(".moreBtn[data-more='1']");
         if (!btn) return;
@@ -685,6 +685,7 @@
         btn.textContent = clamp.classList.contains("expanded") ? "Show less" : "Show more";
       });
 
+      // Initial render
       rerenderAll();
     } catch (err) {
       showError(err.stack || String(err));
