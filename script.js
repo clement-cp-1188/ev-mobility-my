@@ -1,4 +1,3 @@
-// script.js (FULL FILE — updated selected bar rendering + clear button styling)
 (function () {
   function showError(msg) {
     const panel = document.createElement("div");
@@ -16,7 +15,8 @@
       const required = [
         "mode","type","q","countPill","brandLabel","reset","brandSort",
         "brandGrid","tbody","takeaways","mfgFilter",
-        "selectedBar","selectedChips","clearSelected"
+        "selectedBar","selectedChips","clearSelected",
+        "brandCompareBody"
       ];
       const missing = required.filter(id => !document.getElementById(id));
       if (missing.length) {
@@ -39,6 +39,7 @@
         selectedBar: document.getElementById("selectedBar"),
         selectedChips: document.getElementById("selectedChips"),
         clearSelected: document.getElementById("clearSelected"),
+        brandCompareBody: document.getElementById("brandCompareBody"),
       };
 
       const state = {
@@ -188,6 +189,17 @@
         return set.size;
       }
 
+      // brands to compare = selected brands if any; else all filtered-by-controls brands
+      function brandsToCompare() {
+        if (state.selected.size > 0) {
+          return BRANDS_ENRICHED
+            .filter(b => state.selected.has(b.name))
+            .filter(b => brandPassesCommon(b) && brandMatchesMode(b)); // keep consistent with filters
+        }
+        return BRANDS_ENRICHED
+          .filter(b => brandPassesCommon(b) && brandMatchesMode(b));
+      }
+
       // ---------- RENDER ----------
       function renderTakeaways() {
         const items = TAKEAWAYS[state.mode] || TAKEAWAYS.all;
@@ -199,13 +211,9 @@
         els.selectedBar.style.display = names.length ? "flex" : "none";
         els.brandLabel.textContent = names.length ? `${names.length} selected` : "All";
 
-        // Ensure title has the dot and consistent text
         const titleEl = els.selectedBar.querySelector(".selectedTitle");
-        if (titleEl) {
-          titleEl.innerHTML = `<span class="dot"></span> Selected brands`;
-        }
+        if (titleEl) titleEl.innerHTML = `<span class="dot"></span> Selected brands`;
 
-        // Render chips with inner remove button
         els.selectedChips.innerHTML = names.map(n => `
           <div class="selChip" title="${esc(n)}">
             <span class="selChipName">${esc(n)}</span>
@@ -213,7 +221,6 @@
           </div>
         `).join("");
 
-        // Style clear button to match bar
         els.clearSelected.classList.add("clearSelectedBtn");
       }
 
@@ -265,7 +272,7 @@
         }).join("");
       }
 
-      function renderTable() {
+      function renderCoverageTable() {
         const rows = USES.filter(u => state.mode === "all" ? true : norm(u) === norm(state.mode));
 
         function cell(useLabel, type) {
@@ -296,6 +303,74 @@
         `).join("");
       }
 
+      function renderBrandComparisonTable() {
+        const list = brandsToCompare()
+          .slice()
+          .sort((a,b) => (b.jvScore ?? 0) - (a.jvScore ?? 0) || a.name.localeCompare(b.name));
+
+        if (!list.length) {
+          els.brandCompareBody.innerHTML = `
+            <tr>
+              <td colspan="8" style="color:#9aa4b2; padding:14px 10px;">
+                No brands to compare (current filters removed all results).
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        function chips(arr, kind="info") {
+          const items = (arr || []).filter(Boolean);
+          if (!items.length) return `<span style="color:#9aa4b2">—</span>`;
+          return `<div class="brandGridInCell">${items.map(x => `<span class="badge ${kind}">${esc(x)}</span>`).join("")}</div>`;
+        }
+
+        list.forEach(b => {
+          // derive vehicle types list from category string
+          const vt = String(b.category || "")
+            .replaceAll("E-Bicycle (Shared)", "E-Bicycle")
+            .split("/")
+            .map(x => x.trim())
+            .filter(Boolean);
+
+          // normalize use cases title-case
+          const uc = (b.useCases || []).map(x => {
+            const t = String(x || "");
+            return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
+          });
+
+          const roles = (b.roles || []);
+
+          els.brandCompareBody.innerHTML = list.map(row => {
+            const vts = String(row.category || "")
+              .replaceAll("E-Bicycle (Shared)", "E-Bicycle")
+              .split("/")
+              .map(x => x.trim())
+              .filter(Boolean);
+
+            const ucs = (row.useCases || []).map(x => {
+              const t = String(x || "");
+              return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
+            });
+
+            const roleList = (row.roles || []);
+
+            return `
+              <tr>
+                <td><b>${esc(row.name)}</b></td>
+                <td>${esc(row.origin || "—")}</td>
+                <td>${esc(row.manufacturingType || "—")}</td>
+                <td>${chips(vts, "info")}</td>
+                <td>${chips(ucs, "info")}</td>
+                <td><span class="badge ${((row.jvScore ?? 0) >= 75) ? "good" : ((row.jvScore ?? 0) >= 55 ? "warn" : "bad")}">${esc(row.jvScore ?? 0)}</span></td>
+                <td>${roleList.length ? esc(roleList.join(", ")) : `<span style="color:#9aa4b2">—</span>`}</td>
+                <td>${row.notes ? esc(row.notes) : `<span style="color:#9aa4b2">—</span>`}</td>
+              </tr>
+            `;
+          }).join("");
+        });
+      }
+
       function updateCounts() {
         const commercial = uniqueBrandCount("commercial");
         const home = uniqueBrandCount("home");
@@ -307,7 +382,8 @@
         renderTakeaways();
         renderSelectedBar();
         renderDirectory();
-        renderTable();
+        renderCoverageTable();
+        renderBrandComparisonTable();
         updateCounts();
       }
 
@@ -364,7 +440,6 @@
         rerenderAll();
       });
 
-      // remove selected chip (click the ×)
       els.selectedChips.addEventListener("click", (e) => {
         const rm = e.target.closest("[data-remove]");
         if (!rm) return;
