@@ -4,7 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MY Electric Mobility — JV Viability</title>
-  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Cache-bust to avoid GitHub Pages / browser stale assets -->
+  <link rel="stylesheet" href="styles.css?v=4" />
 </head>
 <body>
   <header class="container">
@@ -62,6 +64,7 @@
         <button id="reset" class="ghost" type="button">Reset</button>
       </div>
 
+      <!-- Multi-select bar -->
       <div class="selectedBar" id="selectedBar">
         <div class="selectedTitle">Selected brands</div>
         <div class="selectedChips" id="selectedChips"></div>
@@ -89,23 +92,21 @@
     </section>
 
     <section class="card">
-      <h2>Commercial vs Home — Brand Coverage (Auto from directory)</h2>
+      <h2>Commercial vs Home — Brand Coverage</h2>
       <div class="tableWrap">
         <table>
           <thead>
             <tr>
-              <th style="min-width:120px">Use</th>
-              <th>EV Motorcycle</th>
-              <th>E-Scooter</th>
-              <th>E-Bicycle</th>
+              <th class="thUse">Use</th>
+              <th class="thType">EV Motorcycle</th>
+              <th class="thType">E-Scooter</th>
+              <th class="thType">E-Bicycle</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <p class="hint">
-        Each cell shows <b>brand count</b> + brands matching current filters.
-      </p>
+      <p class="hint">Each cell shows brand count + brands matching the current filters and selection.</p>
     </section>
 
     <section class="card">
@@ -118,6 +119,7 @@
     <span>Static site • GitHub Pages friendly • Multi-select brands to focus the comparison</span>
   </footer>
 
-  <script src="./script.js" defer></script>
+  <!-- Cache-bust -->
+  <script src="./script.js?v=4" defer></script>
 </body>
 </html>
