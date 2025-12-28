@@ -274,22 +274,31 @@ input[type="search"]:focus, select:focus{ border-color:#3a4157; }
 
 /* TABLES */
 .tableWrap{
-  overflow: auto;
-  border-radius: 12px;
-
-  /* KEY: make it a real scroll container so sticky header sticks */
-  max-height: 70vh;        /* you can tune: 60vh / 75vh */
-  position: relative;      /* helps sticky in some browsers */
-  border: 1px solid rgba(37,42,54,.55);
+  overflow:auto;
+  max-height:70vh;
+  position:relative;
+  border-radius:12px;
+  border:1px solid rgba(37,42,54,.55);
 }
 
-/* Sticky headers that ACTUALLY stay visible inside .tableWrap */
 .tableWrap thead th{
   position: sticky;
   top: 0;
-  z-index: 20;             /* above body cells */
+  z-index: 20;
   background: #0f1118;
   box-shadow: 0 1px 0 rgba(37,42,54,.9);
+}
+
+.stickyCol{
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #10131b;
+  border-right: 1px solid rgba(37,42,54,.8);
+}
+.tableWrap thead .stickyCol{
+  z-index: 30;
+  background: #0f1118;
 }
 
 table{
