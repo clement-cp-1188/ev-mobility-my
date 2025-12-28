@@ -339,8 +339,13 @@ tbody td{
   align-items:start;
 }
 
-.compareTable{
-  min-width: 1700px;
+.compareTable td{
+  white-space: normal;
+  max-width: 320px;
+  line-height: 1.35;
+}
+.compareTable th{
+  white-space: nowrap;
 }
 
 /* Sticky first column */
