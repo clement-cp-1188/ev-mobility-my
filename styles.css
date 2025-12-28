@@ -5,21 +5,24 @@
   --muted:#9fb0c0;
   --line:#223043;
   --accent:#7aa2ff;
+  --good:#48d19a;
+  --warn:#ffce5c;
+  --bad:#ff6b6b;
 }
 
 *{box-sizing:border-box}
 body{
   margin:0;
-  background:linear-gradient(180deg, #070a0f 0%, var(--bg) 50%, #05070b 100%);
+  background:linear-gradient(180deg, #070a0f 0%, var(--bg) 55%, #05070b 100%);
   color:var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-.container{max-width:1100px; margin:0 auto; padding:18px 16px;}
+.container{max-width:1120px; margin:0 auto; padding:18px 16px;}
 h1{margin:6px 0 6px; font-size:28px}
 .sub{margin:0; color:var(--muted)}
 .card{
-  background:rgba(17,24,38,0.85);
+  background:rgba(17,24,38,0.86);
   border:1px solid var(--line);
   border-radius:16px;
   padding:14px 14px;
@@ -37,6 +40,7 @@ h1{margin:6px 0 6px; font-size:28px}
 .control{min-width:220px}
 .control.grow{flex:1; min-width:280px}
 label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+.inlineLabel{display:inline; margin-right:8px}
 
 input[type="search"]{
   width:100%;
@@ -78,7 +82,12 @@ input[type="search"]:focus{border-color:var(--accent)}
   color:var(--muted);
   background:#0a0f17;
   font-size:13px;
+  display:flex;
+  gap:6px;
+  align-items:center;
 }
+.pill b{color:var(--text)}
+
 button.ghost{
   padding:8px 10px;
   border-radius:10px;
@@ -89,7 +98,85 @@ button.ghost{
 }
 button.ghost:hover{color:var(--text); border-color:var(--accent)}
 
-.tableWrap{overflow:auto; border-radius:12px; border:1px solid var(--line)}
+.sectionHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.sectionTools select{
+  padding:8px 10px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:#0a0f17;
+  color:var(--text);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:12px;
+  margin-top:10px;
+}
+@media (max-width: 980px){
+  .grid{grid-template-columns: repeat(2, minmax(0, 1fr));}
+}
+@media (max-width: 640px){
+  .grid{grid-template-columns: 1fr;}
+}
+
+.brandCard{
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:rgba(10,15,23,.7);
+  padding:12px;
+  cursor:pointer;
+  transition: transform .08s ease, border-color .08s ease;
+}
+.brandCard:hover{transform: translateY(-1px); border-color: rgba(122,162,255,.6);}
+.brandCard.active{border-color: var(--accent); box-shadow:0 0 0 2px rgba(122,162,255,.18) inset;}
+
+.brandTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+.brandName{font-weight:700; font-size:15px}
+.brandMeta{color:var(--muted); font-size:12px; margin-top:2px}
+.score{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:4px;
+}
+.scoreNum{font-weight:800; font-size:18px}
+.scoreBar{
+  width:88px; height:8px; border-radius:999px;
+  background:#07101b; border:1px solid rgba(34,48,67,.7);
+  overflow:hidden;
+}
+.scoreFill{height:100%}
+
+.badges{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+.badge{
+  display:inline-block;
+  padding:3px 8px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  background:#0a0f17;
+  color:var(--muted);
+  font-size:12px;
+}
+.badge.good{border-color: rgba(72,209,154,.45); color: #bff3df;}
+.badge.warn{border-color: rgba(255,206,92,.45); color: #ffe9b4;}
+.badge.bad{border-color: rgba(255,107,107,.45); color: #ffd0d0;}
+
+.smallText{color:var(--muted); font-size:12px; margin-top:10px; line-height:1.35}
+.smallText b{color:var(--text)}
+.smallText ul{margin:6px 0 0; padding-left:16px}
+
+.tableWrap{overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px}
 table{width:100%; border-collapse:collapse; min-width:980px}
 thead th{
   text-align:left;
@@ -109,15 +196,6 @@ tbody td{
   font-size:13px;
 }
 tbody tr:hover{background:rgba(122,162,255,.06)}
-.badge{
-  display:inline-block;
-  padding:3px 8px;
-  border:1px solid var(--line);
-  border-radius:999px;
-  background:#0a0f17;
-  color:var(--muted);
-  font-size:12px;
-}
 .hint{color:var(--muted); font-size:12px; margin:10px 0 0}
 .footer{color:var(--muted); font-size:12px; padding-bottom:26px}
 ul{margin:8px 0 0; padding-left:18px}
