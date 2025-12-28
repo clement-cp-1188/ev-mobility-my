@@ -10,21 +10,14 @@
     document.body.appendChild(panel);
   }
 
-  window.addEventListener("error", (e) => {
-    showError(e.message + (e.filename ? `\n\nFile: ${e.filename}:${e.lineno}:${e.colno}` : ""));
-  });
-
-  window.addEventListener("unhandledrejection", (e) => {
-    showError("Unhandled Promise Rejection:\n\n" + (e.reason?.stack || e.reason || e));
-  });
-
   document.addEventListener("DOMContentLoaded", () => {
     try {
-      const ids = [
+      const required = [
         "mode","type","q","countPill","brandLabel","reset","brandSort",
-        "brandGrid","tbody","takeaways","mfgFilter","selectedChips","clearSelected","selectedBar"
+        "brandGrid","tbody","takeaways","mfgFilter",
+        "selectedBar","selectedChips","clearSelected"
       ];
-      const missing = ids.filter((id) => !document.getElementById(id));
+      const missing = required.filter(id => !document.getElementById(id));
       if (missing.length) {
         showError("Missing HTML IDs:\n- " + missing.join("\n- "));
         return;
@@ -35,118 +28,61 @@
         type: document.getElementById("type"),
         q: document.getElementById("q"),
         mfgFilter: document.getElementById("mfgFilter"),
-        tbody: document.getElementById("tbody"),
         countPill: document.getElementById("countPill"),
-        reset: document.getElementById("reset"),
-        takeaways: document.getElementById("takeaways"),
-        brandGrid: document.getElementById("brandGrid"),
-        brandSort: document.getElementById("brandSort"),
         brandLabel: document.getElementById("brandLabel"),
+        reset: document.getElementById("reset"),
+        brandSort: document.getElementById("brandSort"),
+        brandGrid: document.getElementById("brandGrid"),
+        tbody: document.getElementById("tbody"),
+        takeaways: document.getElementById("takeaways"),
+        selectedBar: document.getElementById("selectedBar"),
         selectedChips: document.getElementById("selectedChips"),
         clearSelected: document.getElementById("clearSelected"),
-        selectedBar: document.getElementById("selectedBar"),
       };
 
-      // MULTI-SELECT state
       const state = {
         mode: "all",
         type: "all",
+        mfg: "all",
         q: "",
         brandSort: "score",
-        mfg: "all",
-        selected: new Set(), // <-- multi selected brands
+        selected: new Set(), // MULTI
       };
 
       const norm = (s) => String(s ?? "").trim().toLowerCase();
-
-      function escapeHtml(s) {
-        return String(s ?? "")
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;")
-          .replaceAll("'", "&#039;");
-      }
+      const esc = (s) => String(s ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 
       function scoreColor(score) {
         if (score >= 75) return "var(--good)";
         if (score >= 55) return "var(--warn)";
         return "var(--bad)";
       }
-
       function setActive(container, attr, value) {
-        [...container.querySelectorAll("button")].forEach((btn) => {
+        [...container.querySelectorAll("button")].forEach(btn => {
           btn.classList.toggle("active", btn.getAttribute(attr) === value);
         });
       }
 
-      // --- Data (keep your list; add more brands here freely) ---
+      // ---------- DATA ----------
       const BRANDS = [
-        { name:"Blueshark", category:"EV Motorcycle", focus:"Commercial-first (delivery/fleet)", jvScore:82,
-          roles:["Fleet ops partner","Swap ecosystem partner"],
-          fitBadges:[{t:"Fleet-ready",k:"good"},{t:"Swap",k:"good"}],
-          fleetPricingRM:{range:"RM250–400/month"}, batteryModel:{type:"Swappable"}, notes:"Best for pilots where downtime is measurable."
-        },
-        { name:"Modenas", category:"E-Scooter", focus:"Malaysia OEM; delivery-capable scooters", jvScore:76,
-          roles:["OEM/CKD partner","Fleet anchor"],
-          fitBadges:[{t:"Local OEM",k:"good"},{t:"Delivery",k:"good"}],
-          fleetPricingRM:{range:"RM180–350/month"}, batteryModel:{type:"Model dependent"}, notes:"Strong MY JV anchor if ops KPIs are enforced."
-        },
-        { name:"Treeletrik", category:"EV Motorcycle", focus:"Mass commuter + light commercial", jvScore:70,
-          roles:["Local distributor","Service network partner"],
-          fitBadges:[{t:"Local presence",k:"good"},{t:"Value",k:"good"}],
-          fleetPricingRM:{range:"RM200–350/month"}, batteryModel:{type:"Charging-led"}, notes:"Good if your JV imposes service KPIs."
-        },
-        { name:"Yadea", category:"EV Motorcycle / E-Scooter / E-Bicycle", focus:"Mass-market, price-led", jvScore:60,
-          roles:["Hardware supplier","Distributor program partner"],
-          fitBadges:[{t:"Cost scale",k:"good"}],
-          fleetPricingRM:{range:"RM160–280/month"}, batteryModel:{type:"SKU dependent"}, notes:"Fleet use only with strict contract terms."
-        },
-        { name:"NIU", category:"E-Scooter", focus:"Consumer-first; commercial possible", jvScore:62,
-          roles:["Hardware supplier","Retail + fleet program partner"],
-          fitBadges:[{t:"Brand",k:"good"}],
-          fleetPricingRM:{range:"RM180–300/month"}, batteryModel:{type:"SKU dependent"}, notes:"Works if YOU own uptime ops."
-        },
-        { name:"QJMOTOR", category:"EV Motorcycle / E-Scooter", focus:"Distributor-backed; EV line growing", jvScore:68,
-          roles:["Distributor JV","OEM supplier"],
-          fitBadges:[{t:"Distributor strength",k:"good"}],
-          fleetPricingRM:{range:"RM180–320/month"}, batteryModel:{type:"Fixed (common)"}, notes:"Solid option if after-sales is proven."
-        },
-        { name:"Ebixon (TAILG)", category:"EV Motorcycle / E-Scooter", focus:"China OEM with MY presence", jvScore:63,
-          roles:["Hardware supplier","Value fleet option"],
-          fitBadges:[{t:"Value fleet",k:"good"}],
-          fleetPricingRM:{range:"RM160–300/month"}, batteryModel:{type:"Fixed (common)"}, notes:"Good TCO if support is real."
-        },
-        { name:"Beam", category:"E-Bicycle (Shared)", focus:"Shared micromobility operator", jvScore:72,
-          roles:["City ops partner","Campus partner"],
-          fitBadges:[{t:"Ops-strong",k:"good"}],
-          notes:"Good for campuses/townships; ops benchmark."
-        },
-        { name:"Eclimo", category:"EV Motorcycle", focus:"Malaysia-built electric motorcycles", jvScore:60,
-          roles:["Local tech/vehicle partner"],
-          fitBadges:[{t:"Local",k:"good"}],
-          notes:"Local angle is strong, but ops must be real."
-        },
-        { name:"Fiido", category:"E-Bicycle", focus:"Utility/folding e-bikes", jvScore:55,
-          roles:["Hardware supplier"],
-          fitBadges:[{t:"Affordable",k:"good"}],
-          notes:"Home or staff mobility; light duty."
-        },
-        { name:"Engwe", category:"E-Bicycle", focus:"Consumer utility e-bikes", jvScore:54,
-          roles:["Hardware supplier via retailers"],
-          fitBadges:[{t:"Low cost",k:"good"}],
-          notes:"Mostly home use unless you run servicing."
-        },
-        { name:"EFORGE", category:"E-Bicycle", focus:"Malaysia e-bike retailer / house brand", jvScore:50,
-          roles:["Retail supplier"],
-          fitBadges:[{t:"Local retail",k:"good"}],
-          notes:"Home/casual use."
-        },
-        { name:"Xiaomi HIMO", category:"E-Bicycle", focus:"Consumer e-bike", jvScore:48,
-          roles:["Retail product"],
-          fitBadges:[{t:"Consumer",k:"good"}],
-          notes:"Personal mobility only."
-        },
+        { name:"Blueshark", category:"EV Motorcycle", focus:"Commercial-first (delivery/fleet)", jvScore:82, roles:["Fleet ops partner","Swap ecosystem partner"], notes:"Best for pilots where downtime is measurable." },
+        { name:"Modenas", category:"E-Scooter", focus:"Malaysia OEM; delivery-capable scooters", jvScore:76, roles:["OEM/CKD partner","Fleet anchor"], notes:"Strong MY JV anchor if ops KPIs are enforced." },
+        { name:"Treeletrik", category:"EV Motorcycle", focus:"Mass commuter + light commercial", jvScore:70, roles:["Local distributor","Service network partner"], notes:"Good if your JV imposes service KPIs." },
+        { name:"Yadea", category:"EV Motorcycle / E-Scooter / E-Bicycle", focus:"Mass-market, price-led", jvScore:60, roles:["Hardware supplier"], notes:"Fleet use only with strict contract terms." },
+        { name:"NIU", category:"E-Scooter", focus:"Consumer-first; commercial possible", jvScore:62, roles:["Hardware supplier"], notes:"Works if YOU own uptime ops." },
+        { name:"QJMOTOR", category:"EV Motorcycle / E-Scooter", focus:"Distributor-backed; EV line growing", jvScore:68, roles:["Distributor JV"], notes:"Solid option if after-sales is proven." },
+        { name:"Ebixon (TAILG)", category:"EV Motorcycle / E-Scooter", focus:"China OEM with MY presence", jvScore:63, roles:["Hardware supplier"], notes:"Good TCO if support is real." },
+        { name:"Beam", category:"E-Bicycle (Shared)", focus:"Shared micromobility operator", jvScore:72, roles:["City ops partner","Campus partner"], notes:"Good for campuses/townships; ops benchmark." },
+        { name:"Eclimo", category:"EV Motorcycle", focus:"Malaysia-built electric motorcycles", jvScore:60, roles:["Local tech/vehicle partner"], notes:"Local angle is strong, but ops must be real." },
+        { name:"Fiido", category:"E-Bicycle", focus:"Utility/folding e-bikes", jvScore:55, roles:["Hardware supplier"], notes:"Home or staff mobility; light duty." },
+        { name:"Engwe", category:"E-Bicycle", focus:"Consumer utility e-bikes", jvScore:54, roles:["Hardware supplier"], notes:"Mostly home use unless you run servicing." },
+        { name:"EFORGE", category:"E-Bicycle", focus:"Malaysia e-bike retailer / house brand", jvScore:50, roles:["Retail supplier"], notes:"Home/casual use." },
+        { name:"Xiaomi HIMO", category:"E-Bicycle", focus:"Consumer e-bike", jvScore:48, roles:["Retail product"], notes:"Personal mobility only." },
       ];
 
       const BRAND_META = {
@@ -190,35 +126,29 @@
         ],
       };
 
-      const VEHICLE_TYPES = ["EV Motorcycle", "E-Scooter", "E-Bicycle"];
-      const USES = ["Commercial", "Home"];
+      const VEHICLE_TYPES = ["EV Motorcycle","E-Scooter","E-Bicycle"];
+      const USES = ["Commercial","Home"];
 
-      // --- Filtering helpers ---
+      // ---------- FILTERING ----------
       function vehicleTypeMatchesBrand(vehicleType, brandCategory) {
         const cat = String(brandCategory || "");
         const normalized = cat.replaceAll("E-Bicycle (Shared)", "E-Bicycle");
         return normalized.includes(vehicleType);
       }
 
-      function selectedFilterPass(brandName) {
-        // if nothing selected -> pass all
-        if (state.selected.size === 0) return true;
-        return state.selected.has(brandName);
+      function selectedPass(name) {
+        return state.selected.size === 0 || state.selected.has(name);
       }
 
-      function brandPassesCommonFilters(b) {
+      function brandPassesCommon(b) {
         const typeOk = state.type === "all" || vehicleTypeMatchesBrand(state.type, b.category);
 
-        const mfgVal = norm(state.mfg);
-        const bMfg = norm(b.manufacturingType || "tbd");
-        const mfgOk = (mfgVal === "all") || (bMfg === mfgVal);
+        const mfgOk = (norm(state.mfg) === "all") || (norm(b.manufacturingType) === norm(state.mfg));
 
         const q = norm(state.q);
         const hay = norm([
           b.name, b.category, b.focus, b.origin, b.manufacturingType,
-          (b.roles||[]).join(" "),
-          (b.fitBadges||[]).map(x=>x.t).join(" "),
-          b.notes || ""
+          (b.roles||[]).join(" "), b.notes || ""
         ].join(" "));
         const qOk = !q || hay.includes(q);
 
@@ -230,9 +160,8 @@
         return (b.useCases || []).map(norm).includes(norm(state.mode));
       }
 
-      function filteredBrandsForDirectory() {
-        const list = BRANDS_ENRICHED
-          .filter(b => brandPassesCommonFilters(b) && brandMatchesMode(b));
+      function directoryList() {
+        const list = BRANDS_ENRICHED.filter(b => brandPassesCommon(b) && brandMatchesMode(b));
         return list.sort((a,b) => {
           if (state.brandSort === "name") return a.name.localeCompare(b.name);
           return (b.jvScore ?? 0) - (a.jvScore ?? 0);
@@ -242,87 +171,77 @@
       function brandsFor(useLabel, vehicleType) {
         const useMode = norm(useLabel);
         return BRANDS_ENRICHED
-          .filter(b => brandPassesCommonFilters(b))
-          .filter(b => (b.useCases || []).map(norm).includes(useMode))
+          .filter(b => brandPassesCommon(b))
+          .filter(b => (b.useCases||[]).map(norm).includes(useMode))
           .filter(b => vehicleTypeMatchesBrand(vehicleType, b.category))
-          .filter(b => selectedFilterPass(b.name))
+          .filter(b => selectedPass(b.name))
           .map(b => b.name);
       }
 
-      function uniqueBrandCountForMode(mode) {
+      function uniqueBrandCount(mode) {
         const set = new Set();
         BRANDS_ENRICHED
-          .filter(b => brandPassesCommonFilters(b))
-          .filter(b => mode === "all" ? true : (b.useCases || []).map(norm).includes(norm(mode)))
-          .filter(b => selectedFilterPass(b.name))
+          .filter(b => brandPassesCommon(b))
+          .filter(b => mode === "all" ? true : (b.useCases||[]).map(norm).includes(norm(mode)))
+          .filter(b => selectedPass(b.name))
           .forEach(b => set.add(b.name));
         return set.size;
       }
 
-      // --- UI renderers ---
+      // ---------- RENDER ----------
       function renderTakeaways() {
         const items = TAKEAWAYS[state.mode] || TAKEAWAYS.all;
-        els.takeaways.innerHTML = items.map(x => `<li>${escapeHtml(x)}</li>`).join("");
+        els.takeaways.innerHTML = items.map(x => `<li>${esc(x)}</li>`).join("");
       }
 
       function renderSelectedBar() {
         const names = [...state.selected].sort((a,b)=>a.localeCompare(b));
         els.selectedBar.style.display = names.length ? "flex" : "none";
-
         els.brandLabel.textContent = names.length ? `${names.length} selected` : "All";
 
-        els.selectedChips.innerHTML = names.map(n => {
-          return `
-            <span class="badge info badgeBtn" data-remove="${escapeHtml(n)}" title="Remove">
-              ${escapeHtml(n)} <span class="badgeX">×</span>
-            </span>
-          `;
-        }).join("");
+        els.selectedChips.innerHTML = names.map(n => (
+          `<span class="badge info badgeBtn" data-remove="${esc(n)}" title="Remove">
+            ${esc(n)} <span class="badgeX">×</span>
+          </span>`
+        )).join("");
       }
 
-      function renderBrands() {
-        const list = filteredBrandsForDirectory();
-        els.brandGrid.innerHTML = list.map((b) => {
+      function renderDirectory() {
+        const list = directoryList();
+        els.brandGrid.innerHTML = list.map(b => {
           const active = state.selected.has(b.name) ? "active" : "";
           const col = scoreColor(b.jvScore ?? 0);
           const fillW = Math.max(0, Math.min(100, b.jvScore ?? 0));
 
-          const chips = [
-            `<span class="badge info">${escapeHtml(b.manufacturingType || "TBD")}</span>`,
-            `<span class="badge info">${escapeHtml(b.origin || "Origin TBD")}</span>`,
-            ...(b.fitBadges || []).slice(0, 4).map(x => `<span class="badge ${escapeHtml(x.k || "")}">${escapeHtml(x.t)}</span>`)
-          ].join("");
-
           return `
-            <div class="brandCard ${active}" data-brand="${escapeHtml(b.name)}">
+            <div class="brandCard ${active}" data-brand="${esc(b.name)}">
               <div class="brandTop">
                 <div>
-                  <div class="brandName">${escapeHtml(b.name)}</div>
-                  <div class="brandMeta">${escapeHtml(b.category)} • ${escapeHtml(b.focus)}</div>
+                  <div class="brandName">${esc(b.name)}</div>
+                  <div class="brandMeta">${esc(b.category)} • ${esc(b.focus)}</div>
                 </div>
                 <div class="score">
-                  <div class="scoreNum">${escapeHtml(b.jvScore ?? 0)}</div>
+                  <div class="scoreNum">${esc(b.jvScore ?? 0)}</div>
                   <div class="scoreBar">
                     <div class="scoreFill" style="width:${fillW}%; background:${col};"></div>
                   </div>
                 </div>
               </div>
 
-              <div class="badges">${chips}</div>
+              <div class="badges">
+                <span class="badge info">${esc(b.manufacturingType || "TBD")}</span>
+                <span class="badge info">${esc(b.origin || "Origin TBD")}</span>
+                <span class="badge">${esc((b.useCases||[]).join(", ") || "—")}</span>
+              </div>
 
               <div class="smallText">
-                <div><b>Use cases:</b> ${escapeHtml((b.useCases||[]).join(", ") || "—")}</div>
-                <div style="margin-top:6px"><b>JV roles:</b> ${escapeHtml((b.roles || []).join(", "))}</div>
+                <div><b>JV roles:</b> ${esc((b.roles || []).join(", ") || "—")}</div>
               </div>
 
               <div class="details">
                 <div class="kv">
-                  <div class="k">Fleet pricing</div>
-                  <div class="v">${escapeHtml(b.fleetPricingRM?.range || "TBD")}</div>
-                  <div class="k">Battery model</div>
-                  <div class="v">${escapeHtml(b.batteryModel?.type || "TBD")}</div>
                   <div class="k">Notes</div>
-                  <div class="v">${escapeHtml(b.notes || "—")}</div>
+                  <div class="v">${esc(b.notes || "—")}</div>
                 </div>
               </div>
 
@@ -335,57 +254,53 @@
         }).join("");
       }
 
-      function renderComparisonTable() {
+      function renderTable() {
         const rows = USES.filter(u => state.mode === "all" ? true : norm(u) === norm(state.mode));
 
-        const cellFor = (useLabel, type) => {
+        function cell(useLabel, type) {
           if (state.type !== "all" && state.type !== type) {
             return `<td><div class="emptyCell">—</div></td>`;
           }
-
           const list = brandsFor(useLabel, type);
-          const chips = list.length
-            ? `<div class="brandList">${list.map(n => `<span class="badge info">${escapeHtml(n)}</span>`).join("")}</div>`
-            : `<div class="emptyCell">No brands match</div>`;
-
+          if (!list.length) {
+            return `<td><div class="cellHead"><div class="cellCount">0 brands</div></div><div class="emptyCell">No brands match</div></td>`;
+          }
           return `
             <td>
-              <div class="cellHead">
-                <div class="cellCount">${list.length} brand${list.length === 1 ? "" : "s"}</div>
+              <div class="cellHead"><div class="cellCount">${list.length} brand${list.length===1?"":"s"}</div></div>
+              <div class="brandGridInCell">
+                ${list.map(n => `<span class="badge info">${esc(n)}</span>`).join("")}
               </div>
-              ${chips}
             </td>
           `;
-        };
+        }
 
-        els.tbody.innerHTML = rows.map(useLabel => {
-          return `
-            <tr>
-              <td><b>${escapeHtml(useLabel)}</b></td>
-              ${cellFor(useLabel, "EV Motorcycle")}
-              ${cellFor(useLabel, "E-Scooter")}
-              ${cellFor(useLabel, "E-Bicycle")}
-            </tr>
-          `;
-        }).join("");
+        els.tbody.innerHTML = rows.map(useLabel => `
+          <tr>
+            <td><b>${esc(useLabel)}</b></td>
+            ${cell(useLabel, "EV Motorcycle")}
+            ${cell(useLabel, "E-Scooter")}
+            ${cell(useLabel, "E-Bicycle")}
+          </tr>
+        `).join("");
       }
 
       function updateCounts() {
-        const commercial = uniqueBrandCountForMode("commercial");
-        const home = uniqueBrandCountForMode("home");
-        const totalShown = uniqueBrandCountForMode(state.mode === "all" ? "all" : state.mode);
-        els.countPill.textContent = `Commercial: ${commercial} • Home: ${home} • Total shown: ${totalShown}`;
+        const commercial = uniqueBrandCount("commercial");
+        const home = uniqueBrandCount("home");
+        const total = uniqueBrandCount(state.mode === "all" ? "all" : state.mode);
+        els.countPill.textContent = `Commercial: ${commercial} • Home: ${home} • Total shown: ${total}`;
       }
 
       function rerenderAll() {
         renderTakeaways();
         renderSelectedBar();
-        renderBrands();
-        renderComparisonTable();
+        renderDirectory();
+        renderTable();
         updateCounts();
       }
 
-      // --- Events ---
+      // ---------- EVENTS ----------
       els.mode.addEventListener("click", (e) => {
         const btn = e.target.closest("button");
         if (!btn) return;
@@ -417,7 +332,7 @@
         rerenderAll();
       });
 
-      // Card click = toggle select; expand button stays separate
+      // MULTI-SELECT: click card toggles selection; expand button only expands
       els.brandGrid.addEventListener("click", (e) => {
         const card = e.target.closest(".brandCard");
         if (!card) return;
@@ -430,14 +345,16 @@
           return;
         }
 
-        const name = card.dataset.brand;
+        const name = card.getAttribute("data-brand");
+        if (!name) return;
+
         if (state.selected.has(name)) state.selected.delete(name);
         else state.selected.add(name);
 
         rerenderAll();
       });
 
-      // Remove chip from selection bar
+      // Remove from selected bar
       els.selectedChips.addEventListener("click", (e) => {
         const chip = e.target.closest("[data-remove]");
         if (!chip) return;
@@ -454,9 +371,9 @@
       els.reset.addEventListener("click", () => {
         state.mode = "all";
         state.type = "all";
+        state.mfg = "all";
         state.q = "";
         state.brandSort = "score";
-        state.mfg = "all";
         state.selected.clear();
 
         els.q.value = "";
