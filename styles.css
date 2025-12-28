@@ -144,6 +144,7 @@ button.ghost:hover{color:var(--text); border-color:var(--accent)}
 }
 .brandName{font-weight:700; font-size:15px}
 .brandMeta{color:var(--muted); font-size:12px; margin-top:2px}
+
 .score{
   display:flex;
   flex-direction:column;
@@ -175,6 +176,54 @@ button.ghost:hover{color:var(--text); border-color:var(--accent)}
 .smallText{color:var(--muted); font-size:12px; margin-top:10px; line-height:1.35}
 .smallText b{color:var(--text)}
 .smallText ul{margin:6px 0 0; padding-left:16px}
+.kv{
+  display:grid;
+  grid-template-columns: 130px 1fr;
+  gap:6px 10px;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px dashed rgba(34,48,67,.7);
+}
+.kv .k{color:var(--muted)}
+.kv .v{color:var(--text)}
+.kv .v span{color:var(--muted)}
+
+.links{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.links a{
+  font-size:12px;
+  color:var(--text);
+  border:1px solid var(--line);
+  background:#0a0f17;
+  padding:6px 8px;
+  border-radius:999px;
+  text-decoration:none;
+}
+.links a:hover{border-color: var(--accent);}
+.expandRow{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid rgba(34,48,67,.6);
+}
+.expandBtn{
+  border:1px solid var(--line);
+  background:#0a0f17;
+  color:var(--text);
+  font-size:12px;
+  padding:6px 8px;
+  border-radius:10px;
+  cursor:pointer;
+}
+.expandBtn:hover{border-color: var(--accent);}
+.details{display:none;}
+.brandCard.expanded .details{display:block;}
 
 .tableWrap{overflow:auto; border-radius:12px; border:1px solid var(--line); margin-top:10px}
 table{width:100%; border-collapse:collapse; min-width:980px}
