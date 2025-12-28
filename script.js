@@ -50,6 +50,7 @@
         q: "",
         brandSort: "score",
         selected: new Set(),
+        expanded: new Set(), // ✅ PERSIST EXPAND STATE
       };
 
       const norm = (s) => String(s ?? "").trim().toLowerCase();
@@ -71,203 +72,21 @@
         });
       }
 
-      // ---------- DATA (extended fields) ----------
+      // ---------- DATA ----------
       const BRANDS = [
-        {
-          name:"Blueshark",
-          category:"EV Motorcycle",
-          focus:"Commercial-first (delivery/fleet)",
-          jvScore:82,
-          roles:["Fleet ops partner","Swap ecosystem partner"],
-          pricingCommercial:"RM250–400/month (fleet/subscription) — TBD by plan",
-          pricingHome:"Outright / financing via partners — TBD",
-          batteryStrategy:"Swappable ecosystem (where available) + depot/home charging",
-          serviceAfterSales:"Fleet SLA-focused service + planned spares; verify workshop coverage",
-          warranty:"TBD (verify years / battery terms)",
-          financing:"TBD (partner financing / lease options)",
-          jvRisks:"Swap infra capex; dependency on network density; SLA enforcement needed",
-          notes:"Best for pilots where downtime is measurable."
-        },
-        {
-          name:"Modenas",
-          category:"E-Scooter",
-          focus:"Malaysia OEM; delivery-capable scooters",
-          jvScore:76,
-          roles:["OEM/CKD partner","Fleet anchor"],
-          pricingCommercial:"Lease/subscription possible (fleet) — TBD",
-          pricingHome:"Outright + financing common — TBD",
-          batteryStrategy:"Mostly charging-led; model dependent",
-          serviceAfterSales:"Potential advantage: local OEM supply chain; verify parts lead time",
-          warranty:"TBD (verify battery vs vehicle warranty separation)",
-          financing:"Likely strong via local ecosystem; verify partners",
-          jvRisks:"If fleet KPIs not enforced, uptime fails; procurement cycles can be slow",
-          notes:"Strong MY JV anchor if ops KPIs are enforced."
-        },
-        {
-          name:"Beam",
-          category:"E-Bicycle (Shared)",
-          focus:"Shared micromobility operator",
-          jvScore:72,
-          roles:["City ops partner","Campus partner"],
-          pricingCommercial:"Revenue-share / operator contract — TBD",
-          pricingHome:"Not primary (shared operator model)",
-          batteryStrategy:"Operator-managed charging & swaps (ops-managed)",
-          serviceAfterSales:"Strong ops processes; maintenance teams; city compliance heavy",
-          warranty:"N/A (operator-owned assets); verify supplier contracts",
-          financing:"Operator capex; potential JV capex sharing",
-          jvRisks:"Regulatory + city permits; vandalism/theft; utilization volatility",
-          notes:"Good for campuses/townships; ops benchmark."
-        },
-        {
-          name:"Treeletrik",
-          category:"EV Motorcycle",
-          focus:"Mass commuter + light commercial",
-          jvScore:70,
-          roles:["Local distributor","Service network partner"],
-          pricingCommercial:"Fleet pricing possible — TBD",
-          pricingHome:"Outright purchase common — TBD",
-          batteryStrategy:"Charging-led; swap optional depending on SKU/network",
-          serviceAfterSales:"Distributor service network; verify nationwide coverage + parts stocking",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Support quality varies by dealer; JV must mandate service standards",
-          notes:"Good if your JV imposes service KPIs."
-        },
-        {
-          name:"QJMOTOR",
-          category:"EV Motorcycle / E-Scooter",
-          focus:"Distributor-backed; EV line growing",
-          jvScore:68,
-          roles:["Distributor JV"],
-          pricingCommercial:"Value fleet option — TBD",
-          pricingHome:"Outright + financing — TBD",
-          batteryStrategy:"Fixed battery (common); charging-led",
-          serviceAfterSales:"Distributor-managed; check workshop readiness for EV diagnostics",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Parts lead time; reliance on distributor performance; model maturity",
-          notes:"Solid option if after-sales is proven."
-        },
-        {
-          name:"Ebixon (TAILG)",
-          category:"EV Motorcycle / E-Scooter",
-          focus:"China OEM with MY presence",
-          jvScore:63,
-          roles:["Hardware supplier"],
-          pricingCommercial:"Low TCO candidate — TBD",
-          pricingHome:"Budget purchase — TBD",
-          batteryStrategy:"Fixed battery; charging-led",
-          serviceAfterSales:"Verify MY service capability + spare parts stocking",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Service depth + parts availability; weak SLAs kill fleets",
-          notes:"Good TCO if support is real."
-        },
-        {
-          name:"NIU",
-          category:"E-Scooter",
-          focus:"Consumer-first; commercial possible",
-          jvScore:62,
-          roles:["Hardware supplier"],
-          pricingCommercial:"Possible fleet program — TBD",
-          pricingHome:"Retail purchase — TBD",
-          batteryStrategy:"Fixed battery; charging-led",
-          serviceAfterSales:"Retail network varies; fleets need extra maintenance program",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Not fleet-first by default; you may need to own uptime operations",
-          notes:"Works if YOU own uptime ops."
-        },
-        {
-          name:"Yadea",
-          category:"EV Motorcycle / E-Scooter / E-Bicycle",
-          focus:"Mass-market, price-led",
-          jvScore:60,
-          roles:["Hardware supplier"],
-          pricingCommercial:"Aggressive pricing; fleet support varies — TBD",
-          pricingHome:"Price-led retail — TBD",
-          batteryStrategy:"SKU dependent; mostly charging-led",
-          serviceAfterSales:"Dealer dependent; validate SLA + parts",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"If after-sales is weak, fleets fail; ensure contractual guarantees",
-          notes:"Fleet use only with strict contract terms."
-        },
-        {
-          name:"Eclimo",
-          category:"EV Motorcycle",
-          focus:"Malaysia-built electric motorcycles",
-          jvScore:60,
-          roles:["Local tech/vehicle partner"],
-          pricingCommercial:"Pilot pricing — TBD",
-          pricingHome:"Outright — TBD",
-          batteryStrategy:"Charging-led",
-          serviceAfterSales:"Local build advantage; validate scaling ability + spares",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Scaling manufacturing + service coverage; supply chain maturity",
-          notes:"Local angle is strong, but ops must be real."
-        },
-        {
-          name:"Fiido",
-          category:"E-Bicycle",
-          focus:"Utility/folding e-bikes",
-          jvScore:55,
-          roles:["Hardware supplier"],
-          pricingCommercial:"Staff mobility / light duty — TBD",
-          pricingHome:"Retail purchase — TBD",
-          batteryStrategy:"Charging-led",
-          serviceAfterSales:"Retail warranty process; check local support partners",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Not designed for heavy fleet duty; maintenance burden if used commercially",
-          notes:"Home or staff mobility; light duty."
-        },
-        {
-          name:"Engwe",
-          category:"E-Bicycle",
-          focus:"Consumer utility e-bikes",
-          jvScore:54,
-          roles:["Hardware supplier"],
-          pricingCommercial:"Not primary — TBD",
-          pricingHome:"Retail purchase — TBD",
-          batteryStrategy:"Charging-led",
-          serviceAfterSales:"Retail support varies; confirm local warranty handling",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Home-focused; fleet uptime not guaranteed",
-          notes:"Mostly home use unless you run servicing."
-        },
-        {
-          name:"EFORGE",
-          category:"E-Bicycle",
-          focus:"Malaysia e-bike retailer / house brand",
-          jvScore:50,
-          roles:["Retail supplier"],
-          pricingCommercial:"Not primary — TBD",
-          pricingHome:"Retail purchase — TBD",
-          batteryStrategy:"Charging-led",
-          serviceAfterSales:"Local retailer support; validate parts availability",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Limited fleet suitability; depends on retailer service capability",
-          notes:"Home/casual use."
-        },
-        {
-          name:"Xiaomi HIMO",
-          category:"E-Bicycle",
-          focus:"Consumer e-bike",
-          jvScore:48,
-          roles:["Retail product"],
-          pricingCommercial:"Not suitable — TBD",
-          pricingHome:"Retail purchase — TBD",
-          batteryStrategy:"Charging-led",
-          serviceAfterSales:"Retail support; may be limited for commercial operations",
-          warranty:"TBD",
-          financing:"TBD",
-          jvRisks:"Not for fleets; service coverage uncertain",
-          notes:"Personal mobility only."
-        },
+        { name:"Blueshark", category:"EV Motorcycle", focus:"Commercial-first (delivery/fleet)", jvScore:82, roles:["Fleet ops partner","Swap ecosystem partner"], notes:"Best for pilots where downtime is measurable." },
+        { name:"Modenas", category:"E-Scooter", focus:"Malaysia OEM; delivery-capable scooters", jvScore:76, roles:["OEM/CKD partner","Fleet anchor"], notes:"Strong MY JV anchor if ops KPIs are enforced." },
+        { name:"Beam", category:"E-Bicycle (Shared)", focus:"Shared micromobility operator", jvScore:72, roles:["City ops partner","Campus partner"], notes:"Good for campuses/townships; ops benchmark." },
+        { name:"Treeletrik", category:"EV Motorcycle", focus:"Mass commuter + light commercial", jvScore:70, roles:["Local distributor","Service network partner"], notes:"Good if your JV imposes service KPIs." },
+        { name:"QJMOTOR", category:"EV Motorcycle / E-Scooter", focus:"Distributor-backed; EV line growing", jvScore:68, roles:["Distributor JV"], notes:"Solid option if after-sales is proven." },
+        { name:"Ebixon (TAILG)", category:"EV Motorcycle / E-Scooter", focus:"China OEM with MY presence", jvScore:63, roles:["Hardware supplier"], notes:"Good TCO if support is real." },
+        { name:"NIU", category:"E-Scooter", focus:"Consumer-first; commercial possible", jvScore:62, roles:["Hardware supplier"], notes:"Works if YOU own uptime ops." },
+        { name:"Yadea", category:"EV Motorcycle / E-Scooter / E-Bicycle", focus:"Mass-market, price-led", jvScore:60, roles:["Hardware supplier"], notes:"Fleet use only with strict contract terms." },
+        { name:"Eclimo", category:"EV Motorcycle", focus:"Malaysia-built electric motorcycles", jvScore:60, roles:["Local tech/vehicle partner"], notes:"Local angle is strong, but ops must be real." },
+        { name:"Fiido", category:"E-Bicycle", focus:"Utility/folding e-bikes", jvScore:55, roles:["Hardware supplier"], notes:"Home or staff mobility; light duty." },
+        { name:"Engwe", category:"E-Bicycle", focus:"Consumer utility e-bikes", jvScore:54, roles:["Hardware supplier"], notes:"Mostly home use unless you run servicing." },
+        { name:"EFORGE", category:"E-Bicycle", focus:"Malaysia e-bike retailer / house brand", jvScore:50, roles:["Retail supplier"], notes:"Home/casual use." },
+        { name:"Xiaomi HIMO", category:"E-Bicycle", focus:"Consumer e-bike", jvScore:48, roles:["Retail product"], notes:"Personal mobility only." },
       ];
 
       const BRAND_META = {
@@ -331,9 +150,7 @@
         const q = norm(state.q);
         const hay = norm([
           b.name, b.category, b.focus, b.origin, b.manufacturingType,
-          (b.roles||[]).join(" "),
-          b.pricingCommercial, b.pricingHome, b.batteryStrategy, b.serviceAfterSales, b.warranty, b.financing,
-          b.jvRisks, b.notes
+          (b.roles||[]).join(" "), b.notes || ""
         ].join(" "));
         const qOk = !q || hay.includes(q);
 
@@ -374,7 +191,6 @@
       }
 
       function brandsToCompare() {
-        // Compare selected brands if any (even if filters are tight)
         if (state.selected.size > 0) {
           return BRANDS_ENRICHED
             .filter(b => state.selected.has(b.name))
@@ -395,28 +211,24 @@
         els.selectedBar.style.display = names.length ? "flex" : "none";
         els.brandLabel.textContent = names.length ? `${names.length} selected` : "All";
 
-        const titleEl = els.selectedBar.querySelector(".selectedTitle");
-        if (titleEl) titleEl.innerHTML = `<span class="dot"></span> Selected brands`;
-
         els.selectedChips.innerHTML = names.map(n => `
           <div class="selChip" title="${esc(n)}">
             <span class="selChipName">${esc(n)}</span>
             <span class="selChipRemove" data-remove="${esc(n)}" aria-label="Remove">×</span>
           </div>
         `).join("");
-
-        els.clearSelected.classList.add("clearSelectedBtn");
       }
 
       function renderDirectory() {
         const list = directoryList();
         els.brandGrid.innerHTML = list.map(b => {
           const active = state.selected.has(b.name) ? "active" : "";
+          const expanded = state.expanded.has(b.name) ? "expanded" : "";
           const col = scoreColor(b.jvScore ?? 0);
           const fillW = Math.max(0, Math.min(100, b.jvScore ?? 0));
 
           return `
-            <div class="brandCard ${active}" data-brand="${esc(b.name)}">
+            <div class="brandCard ${active} ${expanded}" data-brand="${esc(b.name)}">
               <div class="brandTop">
                 <div>
                   <div class="brandName">${esc(b.name)}</div>
@@ -442,16 +254,14 @@
 
               <div class="details">
                 <div class="kv">
-                  <div class="k">Pricing (Commercial)</div><div class="v">${esc(b.pricingCommercial || "TBD")}</div>
-                  <div class="k">Battery strategy</div><div class="v">${esc(b.batteryStrategy || "TBD")}</div>
-                  <div class="k">Service / after-sales</div><div class="v">${esc(b.serviceAfterSales || "TBD")}</div>
-                  <div class="k">JV risks</div><div class="v">${esc(b.jvRisks || "TBD")}</div>
+                  <div class="k">Notes</div>
+                  <div class="v">${esc(b.notes || "—")}</div>
                 </div>
               </div>
 
               <div class="expandRow">
                 <span class="brandMeta">Click card = toggle select</span>
-                <button class="expandBtn" data-expand="1" type="button">Expand</button>
+                <button class="expandBtn" type="button">${state.expanded.has(b.name) ? "Collapse" : "Expand"}</button>
               </div>
             </div>
           `;
@@ -490,61 +300,61 @@
       }
 
       function renderBrandComparisonTable() {
-  const list = brandsToCompare()
-    .slice()
-    .sort((a,b) => (b.jvScore ?? 0) - (a.jvScore ?? 0) || a.name.localeCompare(b.name));
+        const list = brandsToCompare()
+          .slice()
+          .sort((a,b) => (b.jvScore ?? 0) - (a.jvScore ?? 0) || a.name.localeCompare(b.name));
 
-  els.comparePill.textContent = `Comparing: ${list.length}`;
+        els.comparePill.textContent = `Comparing: ${list.length}`;
 
-  if (!list.length) {
-    els.brandCompareBody.innerHTML = `
-      <tr>
-        <td colspan="8" style="color:#9aa4b2; padding:14px 10px;">
-          No brands to compare (current filters removed all results).
-        </td>
-      </tr>
-    `;
-    return;
-  }
+        if (!list.length) {
+          els.brandCompareBody.innerHTML = `
+            <tr>
+              <td colspan="8" style="color:#9aa4b2; padding:14px 10px;">
+                No brands to compare (current filters removed all results).
+              </td>
+            </tr>
+          `;
+          return;
+        }
 
-  const badgeForScore = (s) => {
-    const v = Number(s ?? 0);
-    const cls = v >= 75 ? "good" : (v >= 55 ? "warn" : "bad");
-    return `<span class="badge ${cls}">${esc(v)}</span>`;
-  };
+        const badgeForScore = (s) => {
+          const v = Number(s ?? 0);
+          const cls = v >= 75 ? "good" : (v >= 55 ? "warn" : "bad");
+          return `<span class="badge ${cls}">${esc(v)}</span>`;
+        };
 
-  const chips = (arr) => {
-    const items = (arr || []).map(x => String(x||"").trim()).filter(Boolean);
-    if (!items.length) return `<span style="color:#9aa4b2">—</span>`;
-    return `<div class="brandGridInCell">${items.map(x => `<span class="badge info">${esc(x)}</span>`).join("")}</div>`;
-  };
+        const chips = (arr) => {
+          const items = (arr || []).map(x => String(x||"").trim()).filter(Boolean);
+          if (!items.length) return `<span style="color:#9aa4b2">—</span>`;
+          return `<div class="brandGridInCell">${items.map(x => `<span class="badge info">${esc(x)}</span>`).join("")}</div>`;
+        };
 
-  els.brandCompareBody.innerHTML = list.map(b => {
-    const vts = String(b.category || "")
-      .replaceAll("E-Bicycle (Shared)", "E-Bicycle")
-      .split("/")
-      .map(x => x.trim())
-      .filter(Boolean);
+        els.brandCompareBody.innerHTML = list.map(b => {
+          const vts = String(b.category || "")
+            .replaceAll("E-Bicycle (Shared)", "E-Bicycle")
+            .split("/")
+            .map(x => x.trim())
+            .filter(Boolean);
 
-    const ucs = (b.useCases || []).map(x => {
-      const t = String(x || "");
-      return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
-    });
+          const ucs = (b.useCases || []).map(x => {
+            const t = String(x || "");
+            return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
+          });
 
-    return `
-      <tr>
-        <td class="stickyCol"><b>${esc(b.name)}</b></td>
-        <td>${esc(b.origin || "—")}</td>
-        <td>${esc(b.manufacturingType || "—")}</td>
-        <td>${chips(vts)}</td>
-        <td>${chips(ucs)}</td>
-        <td>${badgeForScore(b.jvScore)}</td>
-        <td>${(b.roles && b.roles.length) ? esc(b.roles.join(", ")) : `<span style="color:#9aa4b2">—</span>`}</td>
-        <td>${esc(b.focus || "—")}</td>
-      </tr>
-    `;
-  }).join("");
-}
+          return `
+            <tr>
+              <td class="stickyCol"><b>${esc(b.name)}</b></td>
+              <td>${esc(b.origin || "—")}</td>
+              <td>${esc(b.manufacturingType || "—")}</td>
+              <td>${chips(vts)}</td>
+              <td>${chips(ucs)}</td>
+              <td>${badgeForScore(b.jvScore)}</td>
+              <td>${(b.roles && b.roles.length) ? esc(b.roles.join(", ")) : `<span style="color:#9aa4b2">—</span>`}</td>
+              <td>${esc(b.focus || "—")}</td>
+            </tr>
+          `;
+        }).join("");
+      }
 
       function updateCounts() {
         const commercial = uniqueBrandCount("commercial");
@@ -558,7 +368,7 @@
         renderSelectedBar();
         renderDirectory();
         renderCoverageTable();
-        renderBrandComparisonTable();   // <-- THIS is the key you were missing/bugged
+        renderBrandComparisonTable();
         updateCounts();
       }
 
@@ -594,31 +404,31 @@
         rerenderAll();
       });
 
+      // ✅ Fix expand: separate expand click from selection click AND persist state
       els.brandGrid.addEventListener("click", (e) => {
         const card = e.target.closest(".brandCard");
         if (!card) return;
 
-        els.brandGrid.addEventListener("click", (e) => {
-  const card = e.target.closest(".brandCard");
-  if (!card) return;
+        const name = card.getAttribute("data-brand");
+        if (!name) return;
 
-        // If you clicked the expand button, ONLY expand/collapse (do not toggle selection)
+        // If expand button clicked
         const expandBtn = e.target.closest(".expandBtn");
         if (expandBtn) {
           e.preventDefault();
           e.stopPropagation();
-          card.classList.toggle("expanded");
-          expandBtn.textContent = card.classList.contains("expanded") ? "Collapse" : "Expand";
+
+          if (state.expanded.has(name)) state.expanded.delete(name);
+          else state.expanded.add(name);
+
+          rerenderAll();
           return;
         }
-      
-        // Otherwise toggle brand selection
-        const name = card.getAttribute("data-brand");
-        if (!name) return;
-      
+
+        // Otherwise toggle selection
         if (state.selected.has(name)) state.selected.delete(name);
         else state.selected.add(name);
-      
+
         rerenderAll();
       });
 
@@ -642,6 +452,7 @@
         state.q = "";
         state.brandSort = "score";
         state.selected.clear();
+        state.expanded.clear();
 
         els.q.value = "";
         els.brandSort.value = "score";
@@ -652,7 +463,6 @@
         rerenderAll();
       });
 
-      // Init
       rerenderAll();
     } catch (err) {
       showError(err.stack || String(err));
