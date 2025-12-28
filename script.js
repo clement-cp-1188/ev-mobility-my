@@ -490,72 +490,61 @@
       }
 
       function renderBrandComparisonTable() {
-        const list = brandsToCompare()
-          .slice()
-          .sort((a,b) => (b.jvScore ?? 0) - (a.jvScore ?? 0) || a.name.localeCompare(b.name));
+  const list = brandsToCompare()
+    .slice()
+    .sort((a,b) => (b.jvScore ?? 0) - (a.jvScore ?? 0) || a.name.localeCompare(b.name));
 
-        els.comparePill.textContent = `Comparing: ${list.length}`;
+  els.comparePill.textContent = `Comparing: ${list.length}`;
 
-        if (!list.length) {
-          els.brandCompareBody.innerHTML = `
-            <tr>
-              <td colspan="15" style="color:#9aa4b2; padding:14px 10px;">
-                No brands to compare (current filters removed all results).
-              </td>
-            </tr>
-          `;
-          return;
-        }
+  if (!list.length) {
+    els.brandCompareBody.innerHTML = `
+      <tr>
+        <td colspan="8" style="color:#9aa4b2; padding:14px 10px;">
+          No brands to compare (current filters removed all results).
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
-        const badgeForScore = (s) => {
-          const v = Number(s ?? 0);
-          const cls = v >= 75 ? "good" : (v >= 55 ? "warn" : "bad");
-          return `<span class="badge ${cls}">${esc(v)}</span>`;
-        };
+  const badgeForScore = (s) => {
+    const v = Number(s ?? 0);
+    const cls = v >= 75 ? "good" : (v >= 55 ? "warn" : "bad");
+    return `<span class="badge ${cls}">${esc(v)}</span>`;
+  };
 
-        const chips = (arr) => {
-          const items = (arr || []).map(x => String(x||"").trim()).filter(Boolean);
-          if (!items.length) return `<span style="color:#9aa4b2">—</span>`;
-          return `<div class="brandGridInCell">${items.map(x => `<span class="badge info">${esc(x)}</span>`).join("")}</div>`;
-        };
+  const chips = (arr) => {
+    const items = (arr || []).map(x => String(x||"").trim()).filter(Boolean);
+    if (!items.length) return `<span style="color:#9aa4b2">—</span>`;
+    return `<div class="brandGridInCell">${items.map(x => `<span class="badge info">${esc(x)}</span>`).join("")}</div>`;
+  };
 
-        els.brandCompareBody.innerHTML = list.map(b => {
-          const vts = String(b.category || "")
-            .replaceAll("E-Bicycle (Shared)", "E-Bicycle")
-            .split("/")
-            .map(x => x.trim())
-            .filter(Boolean);
+  els.brandCompareBody.innerHTML = list.map(b => {
+    const vts = String(b.category || "")
+      .replaceAll("E-Bicycle (Shared)", "E-Bicycle")
+      .split("/")
+      .map(x => x.trim())
+      .filter(Boolean);
 
-          const ucs = (b.useCases || []).map(x => {
-            const t = String(x || "");
-            return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
-          });
+    const ucs = (b.useCases || []).map(x => {
+      const t = String(x || "");
+      return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : t;
+    });
 
-          return `
-            <tr>
-              <td class="stickyCol"><b>${esc(b.name)}</b></td>
-              <td>${esc(b.origin || "—")}</td>
-              <td>${esc(b.manufacturingType || "—")}</td>
-              <td>${chips(vts)}</td>
-              <td>${chips(ucs)}</td>
-
-              <td>${badgeForScore(b.jvScore)}</td>
-              <td>${(b.roles && b.roles.length) ? esc(b.roles.join(", ")) : `<span style="color:#9aa4b2">—</span>`}</td>
-
-              <td>${esc(b.pricingCommercial || "TBD")}</td>
-              <td>${esc(b.pricingHome || "TBD")}</td>
-              <td>${esc(b.batteryStrategy || "TBD")}</td>
-
-              <td>${esc(b.serviceAfterSales || "TBD")}</td>
-              <td>${esc(b.warranty || "TBD")}</td>
-              <td>${esc(b.financing || "TBD")}</td>
-
-              <td>${esc(b.jvRisks || "TBD")}</td>
-              <td>${esc(b.notes || "—")}</td>
-            </tr>
-          `;
-        }).join("");
-      }
+    return `
+      <tr>
+        <td class="stickyCol"><b>${esc(b.name)}</b></td>
+        <td>${esc(b.origin || "—")}</td>
+        <td>${esc(b.manufacturingType || "—")}</td>
+        <td>${chips(vts)}</td>
+        <td>${chips(ucs)}</td>
+        <td>${badgeForScore(b.jvScore)}</td>
+        <td>${(b.roles && b.roles.length) ? esc(b.roles.join(", ")) : `<span style="color:#9aa4b2">—</span>`}</td>
+        <td>${esc(b.focus || "—")}</td>
+      </tr>
+    `;
+  }).join("");
+}
 
       function updateCounts() {
         const commercial = uniqueBrandCount("commercial");
@@ -609,20 +598,27 @@
         const card = e.target.closest(".brandCard");
         if (!card) return;
 
-        const expandBtn = e.target.closest("button[data-expand='1']");
+        els.brandGrid.addEventListener("click", (e) => {
+  const card = e.target.closest(".brandCard");
+  if (!card) return;
+
+        // If you clicked the expand button, ONLY expand/collapse (do not toggle selection)
+        const expandBtn = e.target.closest(".expandBtn");
         if (expandBtn) {
+          e.preventDefault();
           e.stopPropagation();
           card.classList.toggle("expanded");
           expandBtn.textContent = card.classList.contains("expanded") ? "Collapse" : "Expand";
           return;
         }
-
+      
+        // Otherwise toggle brand selection
         const name = card.getAttribute("data-brand");
         if (!name) return;
-
+      
         if (state.selected.has(name)) state.selected.delete(name);
         else state.selected.add(name);
-
+      
         rerenderAll();
       });
 
