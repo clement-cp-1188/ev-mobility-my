@@ -1,3 +1,4 @@
+// script.js (FULL FILE — updated selected bar rendering + clear button styling)
 (function () {
   function showError(msg) {
     const panel = document.createElement("div");
@@ -46,7 +47,7 @@
         mfg: "all",
         q: "",
         brandSort: "score",
-        selected: new Set(), // MULTI
+        selected: new Set(),
       };
 
       const norm = (s) => String(s ?? "").trim().toLowerCase();
@@ -142,7 +143,6 @@
 
       function brandPassesCommon(b) {
         const typeOk = state.type === "all" || vehicleTypeMatchesBrand(state.type, b.category);
-
         const mfgOk = (norm(state.mfg) === "all") || (norm(b.manufacturingType) === norm(state.mfg));
 
         const q = norm(state.q);
@@ -199,11 +199,22 @@
         els.selectedBar.style.display = names.length ? "flex" : "none";
         els.brandLabel.textContent = names.length ? `${names.length} selected` : "All";
 
-        els.selectedChips.innerHTML = names.map(n => (
-          `<span class="badge info badgeBtn" data-remove="${esc(n)}" title="Remove">
-            ${esc(n)} <span class="badgeX">×</span>
-          </span>`
-        )).join("");
+        // Ensure title has the dot and consistent text
+        const titleEl = els.selectedBar.querySelector(".selectedTitle");
+        if (titleEl) {
+          titleEl.innerHTML = `<span class="dot"></span> Selected brands`;
+        }
+
+        // Render chips with inner remove button
+        els.selectedChips.innerHTML = names.map(n => `
+          <div class="selChip" title="${esc(n)}">
+            <span class="selChipName">${esc(n)}</span>
+            <span class="selChipRemove" data-remove="${esc(n)}" aria-label="Remove">×</span>
+          </div>
+        `).join("");
+
+        // Style clear button to match bar
+        els.clearSelected.classList.add("clearSelectedBtn");
       }
 
       function renderDirectory() {
@@ -332,7 +343,6 @@
         rerenderAll();
       });
 
-      // MULTI-SELECT: click card toggles selection; expand button only expands
       els.brandGrid.addEventListener("click", (e) => {
         const card = e.target.closest(".brandCard");
         if (!card) return;
@@ -354,11 +364,11 @@
         rerenderAll();
       });
 
-      // Remove from selected bar
+      // remove selected chip (click the ×)
       els.selectedChips.addEventListener("click", (e) => {
-        const chip = e.target.closest("[data-remove]");
-        if (!chip) return;
-        const name = chip.getAttribute("data-remove");
+        const rm = e.target.closest("[data-remove]");
+        if (!rm) return;
+        const name = rm.getAttribute("data-remove");
         state.selected.delete(name);
         rerenderAll();
       });
