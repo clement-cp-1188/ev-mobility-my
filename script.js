@@ -35,7 +35,6 @@
         brandSort: document.getElementById("brandSort"),
         brandGrid: document.getElementById("brandGrid"),
         tbody: document.getElementById("tbody"),
-        takeaways: document.getElementById("takeaways"),
         selectedBar: document.getElementById("selectedBar"),
         selectedChips: document.getElementById("selectedChips"),
         clearSelected: document.getElementById("clearSelected"),
@@ -384,8 +383,19 @@
 
       // ---------- RENDER ----------
       function renderTakeaways() {
-        const items = TAKEAWAYS[state.mode] || TAKEAWAYS.all;
-        els.takeaways.innerHTML = items.map(x => `<li>${esc(x)}</li>`).join("");
+        const allEl = document.getElementById("takeawaysAll");
+        const comEl = document.getElementById("takeawaysCommercial");
+        const homeEl = document.getElementById("takeawaysHome");
+      
+        if (!allEl || !comEl || !homeEl) return;
+      
+        const itemsAll = TAKEAWAYS.all || [];
+        const itemsCom = TAKEAWAYS.commercial || [];
+        const itemsHome = TAKEAWAYS.home || [];
+      
+        allEl.innerHTML = itemsAll.map(x => `<li>${esc(x)}</li>`).join("");
+        comEl.innerHTML = itemsCom.map(x => `<li>${esc(x)}</li>`).join("");
+        homeEl.innerHTML = itemsHome.map(x => `<li>${esc(x)}</li>`).join("");
       }
 
       function renderSelectedBar() {
