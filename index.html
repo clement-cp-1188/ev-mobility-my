@@ -3,40 +3,38 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MY Electric Mobility — JV Viability</title>
-
-  <!-- cache-bust -->
-  <link rel="stylesheet" href="./styles.css?v=999" />
-  <script src="./script.js?v=999" defer></script>
+  <title>Malaysia Electric Mobility Comparison</title>
+  <link rel="stylesheet" href="./styles.css?v=1" />
 </head>
-
 <body>
   <header class="container">
     <h1>Malaysia Electric Mobility Comparison</h1>
     <p class="sub">
-      Commercial vs Home across EV motorcycles, e-scooters, e-bicycles — brand directory with JV viability, OEM/manufacturing, and ops detail.
+      Commercial vs Home across EV motorcycles, e-scooters, e-bicycles — brand directory with JV viability,
+      OEM/manufacturing, and ops detail.
     </p>
   </header>
 
   <main class="container">
+    <!-- Controls -->
     <section class="controls card">
       <div class="row">
         <div class="control">
           <label>Mode</label>
           <div class="segmented" id="mode">
-            <button data-mode="all" class="active" type="button">All</button>
-            <button data-mode="commercial" type="button">Commercial</button>
-            <button data-mode="home" type="button">Home</button>
+            <button data-mode="all" class="active">All</button>
+            <button data-mode="commercial">Commercial</button>
+            <button data-mode="home">Home</button>
           </div>
         </div>
 
         <div class="control">
           <label>Vehicle type</label>
           <div class="segmented" id="type">
-            <button data-type="all" class="active" type="button">All</button>
-            <button data-type="EV Motorcycle" type="button">EV Motorcycle</button>
-            <button data-type="E-Scooter" type="button">E-Scooter</button>
-            <button data-type="E-Bicycle" type="button">E-Bicycle</button>
+            <button data-type="all" class="active">All</button>
+            <button data-type="EV Motorcycle">EV Motorcycle</button>
+            <button data-type="E-Scooter">E-Scooter</button>
+            <button data-type="E-Bicycle">E-Bicycle</button>
           </div>
         </div>
 
@@ -45,10 +43,9 @@
           <select id="mfgFilter">
             <option value="all">All</option>
             <option value="Local OEM">Local OEM</option>
-            <option value="Local Assembly/CKD">Local Assembly/CKD</option>
             <option value="Importer/Distributor">Importer/Distributor</option>
-            <option value="Retailer/House brand">Retailer/House brand</option>
             <option value="Shared Operator">Shared Operator</option>
+            <option value="Retailer/House brand">Retailer/House brand</option>
             <option value="TBD">TBD</option>
           </select>
         </div>
@@ -65,13 +62,17 @@
         <button id="reset" class="ghost" type="button">Reset</button>
       </div>
 
-      <div class="selectedBar" id="selectedBar">
-        <div class="selectedTitle"><span class="dot"></span> Selected brands</div>
+      <div class="selectedBar" id="selectedBar" style="display:none;">
+        <div class="selectedTitle">
+          <span class="dot"></span>
+          <span>Selected brands</span>
+        </div>
         <div class="selectedChips" id="selectedChips"></div>
-        <button id="clearSelected" class="clearSelectedBtn" type="button">Clear selection</button>
+        <button class="clearSelectedBtn" id="clearSelected" type="button">Clear selection</button>
       </div>
     </section>
 
+    <!-- Directory -->
     <section class="card">
       <div class="sectionHead">
         <h2>Brand Directory (JV Viability)</h2>
@@ -84,93 +85,99 @@
         </div>
       </div>
 
-      <div id="brandGrid" class="grid"></div>
       <p class="hint">
-        Click card = select/deselect. Click “Expand” = show more info (and it stays expanded even after re-render).
+        Click card = select/deselect. Click “Expand” = show more info (stays expanded even after re-render).
       </p>
+
+      <div id="brandGrid" class="grid"></div>
     </section>
 
+    <!-- Coverage table -->
     <section class="card">
       <h2>Commercial vs Home — Brand Coverage</h2>
+      <p class="hint">Each cell shows brand count + brands matching current filters and selection.</p>
+
       <div class="tableWrap">
-        <table class="coverageTable">
+        <table>
           <thead>
             <tr>
-              <th class="thUse">Use</th>
-              <th class="thType">EV Motorcycle</th>
-              <th class="thType">E-Scooter</th>
-              <th class="thType">E-Bicycle</th>
+              <th>Use</th>
+              <th>EV Motorcycle</th>
+              <th>E-Scooter</th>
+              <th>E-Bicycle</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <p class="hint">Each cell shows brand count + brands matching current filters and selection.</p>
     </section>
 
+    <!-- Comparison table -->
     <section class="card">
-  <div class="sectionHead">
-    <h2>Brands Comparison</h2>
-    <div class="sectionTools">
-      <span class="pill" id="comparePill">Comparing: 0</span>
-    </div>
-  </div>
+      <div class="sectionHead">
+        <h2>Brands Comparison</h2>
+        <div class="sectionTools">
+          <span class="pill" id="comparePill">Comparing: 0</span>
+        </div>
+      </div>
 
-  <p class="hint">
-    Compares <b>selected brands</b>. If none selected, compares all brands matching current filters.
-  </p>
+      <p class="hint">
+        Compares selected brands. If none selected, compares all brands matching current filters.
+      </p>
 
-  <div class="tableWrap">
-    <table class="compareTable">
-      <thead>
-        <tr>
-          <th class="stickyCol">Brand</th>
-          <th>Origin</th>
-          <th>Manufacturing</th>
-          <th>Vehicle Type(s)</th>
-          <th>Use Case(s)</th>
-          <th>JV Score</th>
-          <th>JV Roles</th>
-          <th>Pricing (Commercial)</th>
-          <th>Pricing (Home)</th>
-          <th>Battery Strategy</th>
-          <th>Service / After-sales</th>
-          <th>Warranty</th>
-          <th>Financing</th>
-          <th>JV Risks</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody id="brandCompareBody"></tbody>
-    </table>
-  </div>
-</section>
+      <div class="tableWrap">
+        <table class="compareTable">
+          <thead>
+            <tr>
+              <th class="stickyCol">Brand</th>
+              <th>Origin</th>
+              <th>Manufacturing</th>
+              <th>Vehicle Type(s)</th>
+              <th>Use Case(s)</th>
+              <th>JV Score</th>
+              <th>JV Roles</th>
+              <th>Pricing (Commercial)</th>
+              <th>Pricing (Home)</th>
+              <th>Battery Strategy</th>
+              <th>Service / After-sales</th>
+              <th>Warranty</th>
+              <th>Financing</th>
+              <th>JV Risks</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="brandCompareBody"></tbody>
+        </table>
+      </div>
+    </section>
 
+    <!-- Takeaways -->
     <section class="card">
-  <h2>Quick Takeaways</h2>
+      <h2>Quick Takeaways</h2>
 
-  <div class="takeawaysGrid" id="takeawaysGrid">
-    <div class="takeawayCol">
-      <div class="takeawayHead">All (Overall)</div>
-      <ul class="takeawayList" id="takeawaysAll"></ul>
-    </div>
+      <div class="takeawaysGrid" id="takeawaysGrid">
+        <div class="takeawayCol">
+          <div class="takeawayHead">All (Overall)</div>
+          <ul class="takeawayList" id="takeawaysAll"></ul>
+        </div>
 
-    <div class="takeawayCol">
-      <div class="takeawayHead">Commercial</div>
-      <ul class="takeawayList" id="takeawaysCommercial"></ul>
-    </div>
+        <div class="takeawayCol">
+          <div class="takeawayHead">Commercial</div>
+          <ul class="takeawayList" id="takeawaysCommercial"></ul>
+        </div>
 
-    <div class="takeawayCol">
-      <div class="takeawayHead">Home</div>
-      <ul class="takeawayList" id="takeawaysHome"></ul>
-    </div>
-  </div>
-</section>
- 
+        <div class="takeawayCol">
+          <div class="takeawayHead">Home</div>
+          <ul class="takeawayList" id="takeawaysHome"></ul>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="container footer">
     <span>Static site • GitHub Pages friendly</span>
   </footer>
+
+  <script src="./script.js?v=1" defer></script>
 </body>
 </html>
