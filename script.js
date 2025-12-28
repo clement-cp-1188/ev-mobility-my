@@ -312,8 +312,6 @@
         ],
       };
 
-      const USES = ["Commercial","Home"];
-
       // ---------- FILTERING ----------
       function vehicleTypeMatchesBrand(vehicleType, brandCategory) {
         const cat = String(brandCategory || "");
